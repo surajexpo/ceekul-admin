@@ -1,0 +1,650 @@
+<div class="space-y-6">
+
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+      <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+        <button (click)="cancel()" class="hover:text-gray-800 transition-colors">Workshops</button>
+        <span class="material-icons text-xs">chevron_right</span>
+        <span class="text-gray-800 font-medium">{{ isEditMode ? 'Edit Workshop' : 'New Workshop' }}</span>
+      </div>
+      <h1 class="text-2xl font-heading font-bold text-gray-800">{{ getStatusLabel() }}</h1>
+      <p class="text-sm text-gray-500 mt-1">Define 3-hour structured content, schedules, and settings.</p>
+    </div>
+    <button (click)="cancel()" class="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg shadow-sm hover:bg-gray-50 transition-colors font-medium text-sm flex items-center gap-2">
+      <span class="material-icons text-sm">close</span> Cancel
+    </button>
+  </div>
+
+  <!-- Load Error -->
+  @if (loadError) {
+    <div class="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3 text-red-700">
+      <span class="material-icons text-red-400">error_outline</span>
+      <span class="text-sm font-medium">{{ loadError }}</span>
+    </div>
+  }
+
+  <!-- Step Indicator -->
+  <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+    <div class="flex items-center justify-between relative">
+      <!-- connector line -->
+      <div class="absolute left-0 right-0 top-5 h-0.5 bg-gray-200 mx-12 z-0"></div>
+      @for (step of steps; track $index) {
+        <button
+          (click)="goToStep($index + 1)"
+          class="flex flex-col items-center gap-2 z-10 group cursor-pointer"
+          [class.cursor-not-allowed]="$index + 1 > currentStep && !isStepValid(currentStep)"
+        >
+          <div [class]="'w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border-2 transition-all ' +
+            ($index + 1 === currentStep
+              ? 'bg-black border-black text-white shadow-md scale-110'
+              : $index + 1 < currentStep
+                ? 'bg-gray-800 border-gray-800 text-white'
+                : 'bg-white border-gray-200 text-gray-400 group-hover:border-gray-400')">
+            @if ($index + 1 < currentStep) {
+              <span class="material-icons text-sm">check</span>
+            } @else {
+              <span class="material-icons text-sm">{{ step.icon }}</span>
+            }
+          </div>
+          <span [class]="'text-xs font-medium hidden sm:block transition-colors ' + ($index + 1 === currentStep ? 'text-gray-900' : $index + 1 < currentStep ? 'text-gray-600' : 'text-gray-400')">
+            {{ step.label }}
+          </span>
+        </button>
+      }
+    </div>
+    <!-- Mobile step label -->
+    <p class="sm:hidden text-center text-sm font-semibold text-gray-800 mt-4">
+      Step {{ currentStep }} of {{ totalSteps }}: {{ steps[currentStep - 1].label }}
+    </p>
+  </div>
+
+  <!-- Form Container -->
+  <form [formGroup]="form" class="bg-white rounded-xl border border-gray-100 shadow-sm">
+
+    <!-- ───────────── STEP 1: Basic Info ───────────── -->
+    @if (currentStep === 1) {
+      <div class="p-6 space-y-6">
+        <div>
+          <h2 class="text-lg font-heading font-bold text-gray-800 flex items-center gap-2">
+            <span class="material-icons text-gray-400">edit_note</span> Workshop Details
+          </h2>
+          <p class="text-sm text-gray-500 mt-1">Provide the core information about your workshop.</p>
+        </div>
+
+        <div class="space-y-5">
+          <!-- Workshop Title -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+              Workshop Title <span class="text-red-400">*</span>
+            </label>
+            <input
+              formControlName="workshopTitle"
+              type="text"
+              placeholder="e.g. Computable Vision 101"
+              [class]="'w-full px-4 py-3 border rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/20 transition-all ' + (isFieldInvalid('workshopTitle') ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-gray-400')"
+            />
+            @if (isFieldInvalid('workshopTitle')) {
+              <p class="text-xs text-red-500 mt-1 flex items-center gap-1">
+                <span class="material-icons text-xs">error</span>
+                Title is required (3–100 characters).
+              </p>
+            }
+          </div>
+
+          <!-- Workshop Description -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+              Workshop Description <span class="text-red-400">*</span>
+            </label>
+            <textarea
+              formControlName="workshopDescription"
+              rows="4"
+              placeholder="Describe what participants will learn and the value of this workshop..."
+              [class]="'w-full px-4 py-3 border rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/20 transition-all resize-none ' + (isFieldInvalid('workshopDescription') ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-gray-400')"
+            ></textarea>
+            @if (isFieldInvalid('workshopDescription')) {
+              <p class="text-xs text-red-500 mt-1 flex items-center gap-1">
+                <span class="material-icons text-xs">error</span>
+                Description is required (min 10 characters).
+              </p>
+            }
+          </div>
+
+          <!-- Expert Description -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+              Expert / Presenter Description <span class="text-red-400">*</span>
+            </label>
+            <textarea
+              formControlName="expertDescription"
+              rows="3"
+              placeholder="Briefly describe the expert leading this workshop, their credentials and experience..."
+              [class]="'w-full px-4 py-3 border rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/20 transition-all resize-none ' + (isFieldInvalid('expertDescription') ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-gray-400')"
+            ></textarea>
+            @if (isFieldInvalid('expertDescription')) {
+              <p class="text-xs text-red-500 mt-1 flex items-center gap-1">
+                <span class="material-icons text-xs">error</span>
+                Expert description is required.
+              </p>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ───────────── STEP 2: 3-Hour Plan ───────────── -->
+    @if (currentStep === 2) {
+      <div class="p-6 space-y-6" formGroupName="threeHourPlan">
+        <div>
+          <h2 class="text-lg font-heading font-bold text-gray-800 flex items-center gap-2">
+            <span class="material-icons text-gray-400">view_timeline</span> 3-Hour Content Plan
+          </h2>
+          <p class="text-sm text-gray-500 mt-1">Define the structured content for each hour of the workshop.</p>
+        </div>
+
+        <!-- Ad Break Notice -->
+        <div class="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <span class="material-icons text-amber-500 mt-0.5">info</span>
+          <div>
+            <p class="text-sm font-semibold text-amber-800">Ad Break Automatically Inserted</p>
+            <p class="text-xs text-amber-700 mt-0.5">A 10-minute ad break will be automatically added after Hour 1 when sessions are created.</p>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <!-- Hour 1 -->
+          <div class="border border-gray-200 rounded-xl overflow-hidden" formGroupName="hour1">
+            <div class="bg-gray-900 text-white px-5 py-3 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">1</span>
+                <span class="font-heading font-semibold text-sm">Hour 1 — Opening</span>
+              </div>
+              <span class="text-xs text-gray-400">0:00 – 60:00</span>
+            </div>
+            <div class="p-5 space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-gray-600 mb-1.5">Title <span class="text-red-400">*</span></label>
+                  <input formControlName="title" type="text" placeholder="e.g. Introduction & Foundations"
+                    [class]="'w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/20 ' + (getHour('hour1').get('title')?.invalid && getHour('hour1').get('title')?.touched ? 'border-red-300 bg-red-50' : 'border-gray-200')" />
+                </div>
+                <div class="flex items-end gap-6">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" formControlName="expertAllowed" class="w-4 h-4 rounded accent-black cursor-pointer" />
+                    <span class="text-sm text-gray-700">Expert allowed</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" formControlName="instructorAllowed" class="w-4 h-4 rounded accent-black cursor-pointer" />
+                    <span class="text-sm text-gray-700">Instructor allowed</span>
+                  </label>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1.5">Description <span class="text-red-400">*</span></label>
+                <textarea formControlName="description" rows="2" placeholder="What will be covered in Hour 1..."
+                  [class]="'w-full px-3 py-2.5 border rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-black/20 ' + (getHour('hour1').get('description')?.invalid && getHour('hour1').get('description')?.touched ? 'border-red-300 bg-red-50' : 'border-gray-200')"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ad Break Divider -->
+          <div class="flex items-center gap-3">
+            <div class="flex-1 h-px bg-amber-200"></div>
+            <div class="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-full px-4 py-1.5">
+              <span class="material-icons text-amber-500 text-sm">campaign</span>
+              <span class="text-xs font-bold text-amber-700">10-min Ad Break</span>
+            </div>
+            <div class="flex-1 h-px bg-amber-200"></div>
+          </div>
+
+          <!-- Hour 2 -->
+          <div class="border border-gray-200 rounded-xl overflow-hidden" formGroupName="hour2">
+            <div class="bg-gray-700 text-white px-5 py-3 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">2</span>
+                <span class="font-heading font-semibold text-sm">Hour 2 — Deep Dive</span>
+              </div>
+              <span class="text-xs text-gray-300">70:00 – 130:00</span>
+            </div>
+            <div class="p-5 space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-gray-600 mb-1.5">Title <span class="text-red-400">*</span></label>
+                  <input formControlName="title" type="text" placeholder="e.g. Hands-on Practice"
+                    [class]="'w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/20 ' + (getHour('hour2').get('title')?.invalid && getHour('hour2').get('title')?.touched ? 'border-red-300 bg-red-50' : 'border-gray-200')" />
+                </div>
+                <div class="flex items-end gap-6">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" formControlName="expertAllowed" class="w-4 h-4 rounded accent-black cursor-pointer" />
+                    <span class="text-sm text-gray-700">Expert allowed</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" formControlName="instructorAllowed" class="w-4 h-4 rounded accent-black cursor-pointer" />
+                    <span class="text-sm text-gray-700">Instructor allowed</span>
+                  </label>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1.5">Description <span class="text-red-400">*</span></label>
+                <textarea formControlName="description" rows="2" placeholder="What will be covered in Hour 2..."
+                  [class]="'w-full px-3 py-2.5 border rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-black/20 ' + (getHour('hour2').get('description')?.invalid && getHour('hour2').get('description')?.touched ? 'border-red-300 bg-red-50' : 'border-gray-200')"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hour 3 -->
+          <div class="border border-gray-200 rounded-xl overflow-hidden" formGroupName="hour3">
+            <div class="bg-gray-500 text-white px-5 py-3 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">3</span>
+                <span class="font-heading font-semibold text-sm">Hour 3 — Closing</span>
+              </div>
+              <span class="text-xs text-gray-200">130:00 – 180:00</span>
+            </div>
+            <div class="p-5 space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-gray-600 mb-1.5">Title <span class="text-red-400">*</span></label>
+                  <input formControlName="title" type="text" placeholder="e.g. Q&A and Wrap Up"
+                    [class]="'w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/20 ' + (getHour('hour3').get('title')?.invalid && getHour('hour3').get('title')?.touched ? 'border-red-300 bg-red-50' : 'border-gray-200')" />
+                </div>
+                <div class="flex items-end gap-6">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" formControlName="expertAllowed" class="w-4 h-4 rounded accent-black cursor-pointer" />
+                    <span class="text-sm text-gray-700">Expert allowed</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" formControlName="instructorAllowed" class="w-4 h-4 rounded accent-black cursor-pointer" />
+                    <span class="text-sm text-gray-700">Instructor allowed</span>
+                  </label>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1.5">Description <span class="text-red-400">*</span></label>
+                <textarea formControlName="description" rows="2" placeholder="What will be covered in Hour 3..."
+                  [class]="'w-full px-3 py-2.5 border rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-black/20 ' + (getHour('hour3').get('description')?.invalid && getHour('hour3').get('description')?.touched ? 'border-red-300 bg-red-50' : 'border-gray-200')"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ───────────── STEP 3: Schedules ───────────── -->
+    @if (currentStep === 3) {
+      <div class="p-6 space-y-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <div>
+            <h2 class="text-lg font-heading font-bold text-gray-800 flex items-center gap-2">
+              <span class="material-icons text-gray-400">calendar_month</span> Schedules
+            </h2>
+            <p class="text-sm text-gray-500 mt-1">Add one or more sessions. Drag to reorder. Offline sessions require infrastructure ID.</p>
+          </div>
+          <button type="button" (click)="addSchedule()"
+            class="px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors flex items-center gap-2 shrink-0">
+            <span class="material-icons text-sm">add</span> Add Session
+          </button>
+        </div>
+
+        @if (schedules.length === 0) {
+          <div class="text-center py-16 border-2 border-dashed border-gray-200 rounded-xl">
+            <span class="material-icons text-5xl text-gray-300">calendar_today</span>
+            <p class="text-gray-500 mt-3 font-medium">No sessions yet</p>
+            <p class="text-gray-400 text-sm mt-1 mb-4">Add your first session to get started.</p>
+            <button type="button" (click)="addSchedule()"
+              class="px-5 py-2.5 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors">
+              Add First Session
+            </button>
+          </div>
+        }
+
+        <div cdkDropList (cdkDropListDropped)="dropSchedule($event)" class="space-y-4">
+          @for (schedule of schedules.controls; track $index) {
+            <div cdkDrag class="border border-gray-200 rounded-xl overflow-hidden bg-white shadow-sm cdk-drag-item" [formGroup]="getScheduleGroup($index)">
+              <!-- Drag Handle Header -->
+              <div class="bg-gray-50 border-b border-gray-200 px-5 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <button cdkDragHandle type="button" class="text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing">
+                    <span class="material-icons text-base">drag_indicator</span>
+                  </button>
+                  <span class="font-semibold text-sm text-gray-700">Session {{ $index + 1 }}</span>
+                  <span [class]="'px-2 py-0.5 rounded-full text-xs font-bold border ' +
+                    (getScheduleGroup($index).get('mode')?.value === 'online' ? 'bg-gray-100 text-gray-700 border-gray-300' :
+                     getScheduleGroup($index).get('mode')?.value === 'offline' ? 'bg-gray-100 text-gray-700 border-gray-300' :
+                     'bg-gray-100 text-gray-700 border-gray-300')">
+                    {{ getModeLabel(getScheduleGroup($index).get('mode')?.value) }}
+                  </span>
+                </div>
+                <button type="button" (click)="removeSchedule($index)"
+                  class="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-md hover:bg-red-50">
+                  <span class="material-icons text-sm">delete_outline</span>
+                </button>
+              </div>
+
+              <!-- Schedule Fields -->
+              <div class="p-5 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <!-- Date -->
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Date <span class="text-red-400">*</span></label>
+                    <input formControlName="date" type="date"
+                      [class]="'w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/20 ' + (isScheduleFieldInvalid($index, 'date') ? 'border-red-300 bg-red-50' : 'border-gray-200')" />
+                  </div>
+                  <!-- Start Time -->
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Start Time <span class="text-red-400">*</span></label>
+                    <input formControlName="startTime" type="time"
+                      [class]="'w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/20 ' + (isScheduleFieldInvalid($index, 'startTime') ? 'border-red-300 bg-red-50' : 'border-gray-200')" />
+                  </div>
+                  <!-- End Time -->
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">End Time <span class="text-red-400">*</span></label>
+                    <input formControlName="endTime" type="time"
+                      [class]="'w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/20 ' + (isScheduleFieldInvalid($index, 'endTime') ? 'border-red-300 bg-red-50' : 'border-gray-200')" />
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <!-- Activity -->
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Activity <span class="text-red-400">*</span></label>
+                    <input formControlName="activity" type="text" placeholder="e.g. Lecture, Workshop, Lab"
+                      [class]="'w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/20 ' + (isScheduleFieldInvalid($index, 'activity') ? 'border-red-300 bg-red-50' : 'border-gray-200')" />
+                  </div>
+                  <!-- Fee -->
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Fee ($) <span class="text-red-400">*</span></label>
+                    <input formControlName="fee" type="number" min="0" step="0.01" placeholder="0.00"
+                      [class]="'w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/20 ' + (isScheduleFieldInvalid($index, 'fee') ? 'border-red-300 bg-red-50' : 'border-gray-200')" />
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <!-- Mode -->
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Mode <span class="text-red-400">*</span></label>
+                    <select formControlName="mode"
+                      class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/20 bg-white">
+                      <option value="online">Online</option>
+                      <option value="offline">In-Person (Offline)</option>
+                      <option value="hybrid">Hybrid</option>
+                    </select>
+                  </div>
+
+                  <!-- Stream Mode (online/hybrid only) -->
+                  @if (isOnlineOrHybrid($index)) {
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-600 mb-1.5">Stream Mode</label>
+                      <select formControlName="streamMode"
+                        class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/20 bg-white">
+                        @for (sm of streamModes; track sm.value) {
+                          <option [value]="sm.value">{{ sm.label }}</option>
+                        }
+                      </select>
+                    </div>
+                  }
+
+                  <!-- Timezone -->
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Timezone</label>
+                    <select formControlName="timezone"
+                      class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/20 bg-white">
+                      @for (tz of timezones; track tz) {
+                        <option [value]="tz">{{ tz }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <!-- Location -->
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Location / URL</label>
+                    <input formControlName="location" type="text" placeholder="Zoom link or venue address"
+                      class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/20" />
+                  </div>
+                  <!-- Instructor ID -->
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Instructor ID</label>
+                    <input formControlName="instructorId" type="text" placeholder="Instructor reference ID"
+                      class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black/20" />
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ───────────── STEP 4: Preview ───────────── -->
+    @if (currentStep === 4) {
+      <div class="p-6 space-y-6">
+        <div>
+          <h2 class="text-lg font-heading font-bold text-gray-800 flex items-center gap-2">
+            <span class="material-icons text-gray-400">preview</span> Review & Publish
+          </h2>
+          <p class="text-sm text-gray-500 mt-1">Review all details before saving or publishing your workshop.</p>
+        </div>
+
+        <!-- Success Banner -->
+        @if (submitSuccess) {
+          <div class="bg-gray-900 text-white rounded-xl p-4 flex items-center gap-3">
+            <span class="material-icons text-green-400">check_circle</span>
+            <span class="font-medium">Workshop saved successfully! Redirecting...</span>
+          </div>
+        }
+
+        <!-- Error Banner -->
+        @if (submitError) {
+          <div class="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3 text-red-700">
+            <span class="material-icons text-red-400">error_outline</span>
+            <span class="text-sm font-medium">{{ submitError }}</span>
+          </div>
+        }
+
+        <!-- Preview: Basic Info -->
+        <div class="border border-gray-200 rounded-xl overflow-hidden">
+          <div class="bg-gray-50 border-b border-gray-100 px-5 py-3 flex items-center gap-2">
+            <span class="material-icons text-sm text-gray-400">edit_note</span>
+            <span class="text-sm font-semibold text-gray-700">Basic Information</span>
+          </div>
+          <div class="p-5 space-y-3">
+            <div>
+              <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Title</p>
+              <p class="text-gray-900 font-bold text-base mt-0.5">{{ previewData.workshopTitle || '—' }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Description</p>
+              <p class="text-gray-700 text-sm mt-0.5 leading-relaxed">{{ previewData.workshopDescription || '—' }}</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Expert / Presenter</p>
+              <p class="text-gray-700 text-sm mt-0.5 leading-relaxed">{{ previewData.expertDescription || '—' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview: 3-Hour Plan -->
+        <div class="border border-gray-200 rounded-xl overflow-hidden">
+          <div class="bg-gray-50 border-b border-gray-100 px-5 py-3 flex items-center gap-2">
+            <span class="material-icons text-sm text-gray-400">view_timeline</span>
+            <span class="text-sm font-semibold text-gray-700">3-Hour Content Plan</span>
+          </div>
+          <div class="p-5">
+            <div class="space-y-3">
+              <!-- Hour 1 -->
+              <div class="flex gap-4 items-stretch">
+                <div class="flex flex-col items-center">
+                  <div class="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center text-xs font-bold shrink-0">1</div>
+                  <div class="w-0.5 bg-gray-200 flex-1 mt-2"></div>
+                </div>
+                <div class="flex-1 pb-4">
+                  <p class="font-bold text-gray-900 text-sm">{{ previewData.threeHourPlan?.hour1?.title || 'Hour 1' }}</p>
+                  <p class="text-xs text-gray-500 mt-0.5">{{ previewData.threeHourPlan?.hour1?.description || '—' }}</p>
+                  <div class="flex gap-3 mt-1.5">
+                    @if (previewData.threeHourPlan?.hour1?.expertAllowed) {
+                      <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full border border-gray-200">Expert</span>
+                    }
+                    @if (previewData.threeHourPlan?.hour1?.instructorAllowed) {
+                      <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full border border-gray-200">Instructor</span>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <!-- Ad Break -->
+              <div class="flex gap-4 items-center">
+                <div class="w-8 flex justify-center">
+                  <span class="material-icons text-amber-400 text-sm">campaign</span>
+                </div>
+                <div class="flex-1 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5">
+                  <span class="text-xs font-bold text-amber-700">10-min Ad Break</span>
+                  <span class="text-xs text-amber-600">(auto-inserted)</span>
+                </div>
+              </div>
+
+              <!-- Hour 2 -->
+              <div class="flex gap-4 items-stretch">
+                <div class="flex flex-col items-center">
+                  <div class="w-8 h-8 rounded-full bg-gray-600 text-white flex items-center justify-center text-xs font-bold shrink-0">2</div>
+                  <div class="w-0.5 bg-gray-200 flex-1 mt-2"></div>
+                </div>
+                <div class="flex-1 pb-4">
+                  <p class="font-bold text-gray-900 text-sm">{{ previewData.threeHourPlan?.hour2?.title || 'Hour 2' }}</p>
+                  <p class="text-xs text-gray-500 mt-0.5">{{ previewData.threeHourPlan?.hour2?.description || '—' }}</p>
+                  <div class="flex gap-3 mt-1.5">
+                    @if (previewData.threeHourPlan?.hour2?.expertAllowed) {
+                      <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full border border-gray-200">Expert</span>
+                    }
+                    @if (previewData.threeHourPlan?.hour2?.instructorAllowed) {
+                      <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full border border-gray-200">Instructor</span>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <!-- Hour 3 -->
+              <div class="flex gap-4 items-start">
+                <div class="w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center text-xs font-bold shrink-0">3</div>
+                <div class="flex-1">
+                  <p class="font-bold text-gray-900 text-sm">{{ previewData.threeHourPlan?.hour3?.title || 'Hour 3' }}</p>
+                  <p class="text-xs text-gray-500 mt-0.5">{{ previewData.threeHourPlan?.hour3?.description || '—' }}</p>
+                  <div class="flex gap-3 mt-1.5">
+                    @if (previewData.threeHourPlan?.hour3?.expertAllowed) {
+                      <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full border border-gray-200">Expert</span>
+                    }
+                    @if (previewData.threeHourPlan?.hour3?.instructorAllowed) {
+                      <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full border border-gray-200">Instructor</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview: Schedules -->
+        <div class="border border-gray-200 rounded-xl overflow-hidden">
+          <div class="bg-gray-50 border-b border-gray-100 px-5 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="material-icons text-sm text-gray-400">calendar_month</span>
+              <span class="text-sm font-semibold text-gray-700">Schedules</span>
+            </div>
+            <span class="text-xs font-bold text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">{{ schedules.length }} session{{ schedules.length !== 1 ? 's' : '' }}</span>
+          </div>
+          @if (schedules.length === 0) {
+            <div class="p-5 text-center text-gray-400 text-sm">No sessions added. Go back to add sessions.</div>
+          } @else {
+            <div class="divide-y divide-gray-100">
+              @for (s of schedules.controls; track $index) {
+                <div class="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div class="w-7 h-7 rounded-full bg-gray-100 border border-gray-200 text-gray-700 flex items-center justify-center text-xs font-bold shrink-0">
+                    {{ $index + 1 }}
+                  </div>
+                  <div class="flex-1">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <span class="font-semibold text-gray-900 text-sm">{{ getScheduleGroup($index).get('activity')?.value || 'Session ' + ($index + 1) }}</span>
+                      <span class="px-2 py-0.5 bg-gray-100 text-gray-600 border border-gray-200 rounded-full text-xs font-bold">
+                        {{ getModeLabel(getScheduleGroup($index).get('mode')?.value) }}
+                      </span>
+                      @if (isOnlineOrHybrid($index)) {
+                        <span class="px-2 py-0.5 bg-gray-50 text-gray-500 border border-gray-200 rounded-full text-xs">
+                          {{ getStreamModeLabel(getScheduleGroup($index).get('streamMode')?.value) }}
+                        </span>
+                      }
+                    </div>
+                    <p class="text-xs text-gray-500 mt-0.5">
+                      {{ getScheduleGroup($index).get('date')?.value || 'No date' }}
+                      &nbsp;·&nbsp;
+                      {{ getScheduleGroup($index).get('startTime')?.value || '--' }} – {{ getScheduleGroup($index).get('endTime')?.value || '--' }}
+                      &nbsp;·&nbsp;
+                      {{ getScheduleGroup($index).get('timezone')?.value }}
+                    </p>
+                  </div>
+                  <div class="text-right">
+                    <span class="font-bold text-gray-800 text-sm">${{ getScheduleGroup($index).get('fee')?.value | number: '1.2-2' }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Total Revenue Potential -->
+        @if (schedules.length > 0) {
+          <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 flex items-center justify-between">
+            <span class="text-sm font-semibold text-gray-600">Estimated Revenue Potential</span>
+            <span class="text-lg font-heading font-bold text-gray-900">
+              ${{ getTotalFee() | number: '1.2-2' }}
+            </span>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ───────────── Navigation Footer ───────────── -->
+    <div class="border-t border-gray-100 px-6 py-4 flex items-center justify-between bg-gray-50/50 rounded-b-xl">
+      <button
+        type="button"
+        (click)="prevStep()"
+        [disabled]="currentStep === 1"
+        class="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2">
+        <span class="material-icons text-sm">arrow_back</span> Back
+      </button>
+
+      <div class="flex items-center gap-3">
+        @if (currentStep === 4) {
+          <button
+            type="button"
+            (click)="saveAsDraft()"
+            [disabled]="isSubmitting || submitSuccess"
+            class="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+            @if (isSubmitting) { <span class="material-icons text-sm animate-spin">refresh</span> }
+            Save as Draft
+          </button>
+          <button
+            type="button"
+            (click)="publish()"
+            [disabled]="isSubmitting || submitSuccess"
+            class="px-5 py-2 bg-black text-white rounded-lg text-sm font-bold hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm">
+            @if (isSubmitting) {
+              <span class="material-icons text-sm animate-spin">refresh</span> Saving...
+            } @else {
+              <span class="material-icons text-sm">publish</span> Publish
+            }
+          </button>
+        } @else {
+          <button
+            type="button"
+            (click)="nextStep()"
+            class="px-5 py-2 bg-black text-white rounded-lg text-sm font-bold hover:bg-gray-800 transition-colors flex items-center gap-2 shadow-sm">
+            Next <span class="material-icons text-sm">arrow_forward</span>
+          </button>
+        }
+      </div>
+    </div>
+  </form>
+</div>

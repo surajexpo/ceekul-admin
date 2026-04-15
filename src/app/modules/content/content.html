@@ -1,0 +1,55 @@
+<div class="space-y-6">
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+      <h1 class="text-2xl font-heading font-bold text-gray-800">Content Library</h1>
+      <p class="text-sm text-gray-500 mt-1">Upload, categorize, and track learning materials across the platform.</p>
+    </div>
+    <div class="flex gap-3">
+      <button class="px-4 py-2 border-2 border-dashed border-gray-300 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 hover:border-gray-400 transition-colors font-bold text-sm flex items-center gap-2">
+        <span class="material-icons text-sm">cloud_upload</span> Upload File
+      </button>
+      <button class="px-4 py-2 bg-black text-white rounded-lg shadow-md hover:bg-black/90 transition-all hover:-translate-y-0.5 font-bold text-sm flex items-center gap-2">
+        <span class="material-icons text-sm">add</span> New Article
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 flex gap-2 p-3 overflow-x-auto custom-scrollbar">
+    <div class="px-4 py-2.5 bg-black/10 text-black rounded-lg font-bold text-sm cursor-pointer border-2 border-black transition-all shadow-sm shrink-0">All Content</div>
+    <div class="px-4 py-2.5 text-gray-600 hover:bg-gray-50 rounded-lg font-bold text-sm cursor-pointer transition-colors border-2 border-transparent hover:border-gray-200 shrink-0">Space Education</div>
+    <div class="px-4 py-2.5 text-gray-600 hover:bg-gray-50 rounded-lg font-bold text-sm cursor-pointer transition-colors border-2 border-transparent hover:border-gray-200 shrink-0">Computable Vision</div>
+    <div class="px-4 py-2.5 text-gray-600 hover:bg-gray-50 rounded-lg font-bold text-sm cursor-pointer transition-colors border-2 border-transparent hover:border-gray-200 shrink-0">Mathematics</div>
+    <div class="px-4 py-2.5 text-gray-600 hover:bg-gray-50 rounded-lg font-bold text-sm cursor-pointer transition-colors border-2 border-transparent hover:border-gray-200 shrink-0">Applied Science</div>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    @for(item of contentList; track item.id){
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg hover:-translate-y-1.5 hover:border-black/30 transition-all group duration-300 flex flex-col cursor-pointer">
+        <div class="h-40 bg-gray-100 flex items-center justify-center relative overflow-hidden group-hover:bg-gray-200 transition-colors shrink-0">
+          <!-- Thumbnail Background Mock -->
+          <div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgemlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSJjdXJyZW50Q29sb3IiIGQ9Ik0xMiAyTDQgNXYxNGw4IDggOC04VjVsLTgtM3ptMCAyLjE5TDcuMjkgNyA0IDguMTVWMThsOC0zIDgtNCA0LTVWMThsOCA4bC04LTh2LTRMMTIgNC4xOXoiLz48L3N2Zz4=')]"></div>
+          
+          @if(item.type === 'Video') {
+            <span class="material-icons text-5xl text-gray-400 group-hover:text-gray-700 group-hover:scale-110 transition-all relative z-10 drop-shadow-sm">play_circle_filled</span>
+          } @else if(item.type === 'PDF') {
+            <span class="material-icons text-5xl text-gray-400 group-hover:text-gray-500 group-hover:scale-110 transition-all relative z-10 drop-shadow-sm">picture_as_pdf</span>
+          } @else {
+            <span class="material-icons text-5xl text-gray-400 group-hover:text-gray-800 group-hover:scale-110 transition-all relative z-10 drop-shadow-sm">article</span>
+          }
+          <div class="absolute top-3 right-3 z-10">
+             <span [class]="'px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider shadow-sm backdrop-blur-sm bg-white/90 ' + getStatusClass(item.status)">{{ item.status }}</span>
+          </div>
+        </div>
+        <div class="p-5 flex flex-col flex-1">
+          <div class="text-xs font-bold text-black mb-2 uppercase tracking-wider flex items-center gap-1"><span class="material-icons text-[14px]">folder</span> {{ item.category }}</div>
+          <h3 class="font-bold text-gray-800 text-lg leading-tight group-hover:text-deep-blue transition-colors flex-1">{{ item.title }}</h3>
+          
+          <div class="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500 shrink-0">
+            <span class="font-medium flex items-center gap-1.5"><span class="material-icons text-[16px] text-gray-400">visibility</span> {{ item.views }}</span>
+            <span class="font-medium flex items-center gap-1.5"><span class="material-icons text-[16px] text-gray-400">calendar_today</span> Oct 12</span>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

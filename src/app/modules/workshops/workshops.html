@@ -1,0 +1,226 @@
+<div class="space-y-6">
+
+  <!-- Delete Confirmation Modal -->
+  @if (deleteTargetId) {
+    <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+            <span class="material-icons text-red-500">delete_forever</span>
+          </div>
+          <div>
+            <h3 class="font-heading font-bold text-gray-900">Delete Workshop?</h3>
+            <p class="text-sm text-gray-600 mt-1">
+              This will permanently delete <strong>{{ deleteTargetTitle }}</strong> and all its schedules. This action cannot be undone.
+            </p>
+          </div>
+        </div>
+        @if (deleteError) {
+          <div class="bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 flex items-center gap-2 text-red-700 text-sm">
+            <span class="material-icons text-sm">error_outline</span>
+            {{ deleteError }}
+          </div>
+        }
+        <div class="flex gap-3 justify-end pt-2">
+          <button (click)="cancelDelete()" [disabled]="isDeleting"
+            class="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50">
+            Cancel
+          </button>
+          <button (click)="deleteWorkshop()" [disabled]="isDeleting"
+            class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-bold hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center gap-2">
+            @if (isDeleting) {
+              <span class="material-icons text-sm animate-spin">refresh</span>
+            }
+            Delete Workshop
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+      <h1 class="text-2xl font-heading font-bold text-gray-800">My Workshops</h1>
+      <p class="text-sm text-gray-500 mt-1">Workshops you created or are assigned to as an instructor.</p>
+    </div>
+    <div class="flex gap-3">
+      <button (click)="loadWorkshops()"
+        class="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg shadow-sm hover:bg-gray-50 transition-colors font-medium text-sm flex items-center gap-2">
+        <span class="material-icons text-sm">refresh</span> Refresh
+      </button>
+      <button (click)="createWorkshop()"
+        class="px-4 py-2 bg-black text-white rounded-lg shadow-sm hover:bg-gray-800 transition-colors font-medium text-sm flex items-center gap-2">
+        <span class="material-icons text-sm">add</span> New Workshop
+      </button>
+    </div>
+  </div>
+
+  <!-- API Warning Banner -->
+  @if (loadError) {
+    <div class="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+      <span class="material-icons text-amber-400 text-base">warning_amber</span>
+      <span class="text-sm text-amber-700 font-medium">{{ loadError }}</span>
+    </div>
+  }
+
+  <!-- Metric Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-6 text-white shadow-md relative overflow-hidden group">
+      <div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full group-hover:scale-110 transition-transform"></div>
+      <h3 class="text-sm font-medium text-gray-400 relative z-10">Published</h3>
+      <p class="text-4xl font-heading font-bold mt-2 text-white relative z-10">{{ liveCount }}</p>
+      <div class="mt-4 text-xs flex items-center gap-1 text-gray-300 font-medium relative z-10">
+        <span class="material-icons text-sm text-gray-400">check_circle</span> Live & active
+      </div>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+      <h3 class="text-sm font-medium text-gray-500">Drafts</h3>
+      <p class="text-4xl font-heading font-bold mt-2 text-gray-800">{{ draftCount }}</p>
+      <div class="mt-4 text-xs font-medium text-gray-400">In progress</div>
+    </div>
+
+    <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:border-red-200 transition-colors">
+      <h3 class="text-sm font-medium text-gray-500">Cancelled</h3>
+      <p class="text-4xl font-heading font-bold mt-2 text-gray-800">{{ cancelledCount }}</p>
+      <div class="mt-4 text-xs font-medium text-gray-400">No longer active</div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+
+    <!-- Loading State -->
+    @if (isLoading) {
+      <div class="flex items-center justify-center py-20">
+        <div class="flex flex-col items-center gap-3 text-gray-400">
+          <span class="material-icons text-4xl animate-spin">refresh</span>
+          <p class="text-sm font-medium">Loading your workshops...</p>
+        </div>
+      </div>
+    }
+
+    <!-- Empty State -->
+    @if (!isLoading && workshops.length === 0) {
+      <div class="flex flex-col items-center justify-center py-20 text-center">
+        <span class="material-icons text-6xl text-gray-200">event_note</span>
+        <p class="text-gray-600 font-semibold mt-4">No workshops yet</p>
+        <p class="text-gray-400 text-sm mt-1 mb-5">Create your first workshop to get started.</p>
+        <button (click)="createWorkshop()"
+          class="px-5 py-2.5 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors flex items-center gap-2">
+          <span class="material-icons text-sm">add</span> Create Workshop
+        </button>
+      </div>
+    }
+
+    <!-- Workshops Table -->
+    @if (!isLoading && workshops.length > 0) {
+      <table class="w-full text-left text-sm text-gray-600">
+        <thead class="bg-gray-50 text-gray-700 font-heading border-b border-gray-100 uppercase text-[10px] tracking-wider font-bold">
+          <tr>
+            <th class="px-6 py-4">Workshop</th>
+            <th class="px-6 py-4">Status</th>
+            <th class="px-6 py-4">Sessions</th>
+            <th class="px-6 py-4">Mode</th>
+            <th class="px-6 py-4 text-right">Revenue Potential</th>
+            <th class="px-6 py-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          @for (workshop of workshops; track workshop._id) {
+            <tr class="hover:bg-gray-50 transition-colors group">
+
+              <!-- Title + ID -->
+              <td class="px-6 py-4">
+                <div class="font-bold text-gray-900 group-hover:text-black transition-colors">{{ workshop.workshopTitle }}</div>
+                @if (workshop._id) {
+                  <div class="text-xs text-gray-400 mt-0.5 font-mono">{{ workshop._id | slice:0:12 }}...</div>
+                }
+                @if (workshop.createdAt) {
+                  <div class="text-xs text-gray-400 mt-0.5">{{ workshop.createdAt | date:'mediumDate' }}</div>
+                }
+              </td>
+
+              <!-- Status -->
+              <td class="px-6 py-4">
+                <span [class]="'px-2.5 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5 ' + getStatusBadgeClass(workshop.status)">
+                  @if (isLive(workshop.status)) {
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+                  }
+                  {{ getStatusLabel(workshop.status) }}
+                </span>
+              </td>
+
+              <!-- Sessions count -->
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-1.5">
+                  <span class="material-icons text-sm text-gray-400">calendar_today</span>
+                  <span class="font-medium text-gray-700">{{ workshop.schedules.length }}</span>
+                  <span class="text-gray-400 text-xs">session{{ workshop.schedules.length !== 1 ? 's' : '' }}</span>
+                </div>
+              </td>
+
+              <!-- Mode (from first schedule) -->
+              <td class="px-6 py-4">
+                @if (workshop.schedules.length > 0) {
+                  <span class="text-xs font-medium text-gray-600 capitalize">
+                    {{ workshop.schedules[0].mode }}
+                  </span>
+                } @else {
+                  <span class="text-xs text-gray-400">—</span>
+                }
+              </td>
+
+              <!-- Revenue -->
+              <td class="px-6 py-4 text-right font-bold text-gray-800 tracking-wide">
+                {{ formatRevenue(workshop.totalRevenuePotential ?? getTotalRevenue(workshop)) }}
+              </td>
+
+              <!-- Actions -->
+              <td class="px-6 py-4 text-right">
+                <div class="flex items-center justify-end gap-1">
+                  @if (workshop.status === 'draft') {
+                    <button (click)="publishWorkshop(workshop._id)"
+                      class="text-gray-800 border border-gray-400 hover:bg-gray-200 rounded-md px-2.5 py-1 text-xs font-bold transition-colors shadow-sm mr-1">
+                      Publish
+                    </button>
+                  }
+                  <button (click)="viewWorkshop(workshop._id)" title="View Details"
+                    class="text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors p-1.5 rounded-md">
+                    <span class="material-icons text-sm">open_in_new</span>
+                  </button>
+                  <button (click)="editWorkshop(workshop._id)" title="Edit"
+                    class="text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors p-1.5 rounded-md">
+                    <span class="material-icons text-sm">edit</span>
+                  </button>
+                  <button (click)="cloneWorkshop(workshop._id)" title="Clone"
+                    class="text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors p-1.5 rounded-md">
+                    <span class="material-icons text-sm">content_copy</span>
+                  </button>
+                  <button (click)="confirmDelete(workshop._id)" title="Delete"
+                    class="text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors p-1.5 rounded-md">
+                    <span class="material-icons text-sm">delete_outline</span>
+                  </button>
+                </div>
+              </td>
+
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <!-- Footer with pagination info -->
+      <div class="px-6 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+        <span class="text-xs text-gray-500">
+          Showing {{ workshops.length }} of {{ pagination.total }} workshop{{ pagination.total !== 1 ? 's' : '' }}
+        </span>
+        <button (click)="createWorkshop()"
+          class="text-xs font-medium text-gray-600 hover:text-gray-900 flex items-center gap-1 transition-colors">
+          <span class="material-icons text-xs">add</span> New Workshop
+        </button>
+      </div>
+    }
+
+  </div>
+</div>

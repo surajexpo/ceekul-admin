@@ -1,0 +1,93 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-heading font-bold text-gray-800">Dashboard Overview</h1>
+      <p class="text-sm text-gray-500 mt-1">Welcome back, here's what's happening today.</p>
+    </div>
+    <div class="flex gap-3">
+      <button class="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg shadow-sm hover:bg-gray-50 transition-colors font-medium text-sm flex items-center gap-2">
+        <span class="material-icons text-sm">download</span> Export
+      </button>
+      <button class="px-4 py-2 bg-black text-white rounded-lg shadow-md hover:bg-gray-800 transition-colors font-medium text-sm flex items-center gap-2">
+        <span class="material-icons text-sm">add</span> New Report
+      </button>
+    </div>
+  </div>
+
+  <!-- Metrics Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+    <!-- Using Angular 17+ control flow -->
+    @for (metric of metrics; track metric.title) {
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-sm font-medium text-gray-500">{{ metric.title }}</p>
+            <h3 class="text-3xl font-heading font-bold text-gray-800 mt-2">{{ metric.value }}</h3>
+          </div>
+          <div [class]="'w-12 h-12 rounded-full flex items-center justify-center ' + metric.bg">
+            <span [class]="'material-icons ' + metric.color">{{ metric.icon }}</span>
+          </div>
+        </div>
+        <div class="mt-4 flex items-center text-sm">
+          <span [class]="metric.trend === 'up' ? 'text-gray-700 font-medium flex items-center gap-1' : 'text-gray-700 font-medium flex items-center gap-1'">
+            <span class="material-icons text-sm">{{ metric.trend === 'up' ? 'trending_up' : 'trending_down' }}</span> 
+            {{ metric.percent }}
+          </span>
+          <span class="text-gray-400 ml-2">vs last month</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Charts Area -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-lg font-heading font-bold text-gray-800">Platform Engagement</h2>
+        <select class="bg-light-grey border-none rounded-lg text-sm px-3 py-1.5 focus:ring-2 focus:ring-black outline-none text-gray-600">
+          <option>Last 6 Months</option>
+          <option>This Year</option>
+        </select>
+      </div>
+      <div class="h-72 w-full relative">
+        <canvas #growthChart></canvas>
+      </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <h2 class="text-lg font-heading font-bold text-gray-800 mb-6">Recent Activity</h2>
+      <div class="space-y-6">
+        <!-- Activity items -->
+        <div class="flex gap-4">
+          <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
+            <span class="material-icons text-gray-800 text-sm">edit_document</span>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-800">New Space Module created</p>
+            <p class="text-xs text-gray-500 mt-0.5">By Dr. Sarah Jenkins • 2 hrs ago</p>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <div class="w-10 h-10 rounded-full bg-black bg-opacity-20 flex items-center justify-center shrink-0">
+            <span class="material-icons text-black text-sm">how_to_reg</span>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-800">3 Teachers verified</p>
+            <p class="text-xs text-gray-500 mt-0.5">System • 5 hrs ago</p>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
+            <span class="material-icons text-gray-500 text-sm">event_available</span>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-800">Workshop approved</p>
+            <p class="text-xs text-gray-500 mt-0.5">Computable Vision 101 • 1 day ago</p>
+          </div>
+        </div>
+      </div>
+      <button class="w-full mt-6 py-2 text-sm font-medium text-black hover:bg-black hover:bg-opacity-10 rounded-lg transition-colors">View All Activity</button>
+    </div>
+  </div>
+</div>

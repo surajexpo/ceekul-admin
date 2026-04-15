@@ -1,0 +1,323 @@
+<div class="space-y-6">
+
+  <!-- Delete Confirmation Modal -->
+  @if (showDeleteConfirm) {
+    <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+            <span class="material-icons text-red-500">delete_forever</span>
+          </div>
+          <div>
+            <h3 class="font-heading font-bold text-gray-900">Delete Program?</h3>
+            <p class="text-sm text-gray-600 mt-1">
+              This will permanently delete <strong>{{ program?.title }}</strong> and its entire curriculum. This action cannot be undone.
+            </p>
+          </div>
+        </div>
+        <div class="flex gap-3 justify-end pt-2">
+          <button (click)="cancelDelete()" [disabled]="isDeleting"
+            class="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50">
+            Cancel
+          </button>
+          <button (click)="deleteProgram()" [disabled]="isDeleting"
+            class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-bold hover:bg-red-600 disabled:opacity-50 flex items-center gap-2">
+            @if (isDeleting) { <span class="material-icons text-sm animate-spin">refresh</span> }
+            Delete Program
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+      <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+        <button (click)="goBack()" class="hover:text-gray-800 transition-colors flex items-center gap-1">
+          <span class="material-icons text-sm">arrow_back</span> Programs
+        </button>
+        @if (program) {
+          <span class="material-icons text-xs">chevron_right</span>
+          <span class="text-gray-800 font-medium truncate max-w-xs">{{ program.title }}</span>
+        }
+      </div>
+      <h1 class="text-2xl font-heading font-bold text-gray-800">Program Details</h1>
+    </div>
+
+    @if (program) {
+      <div class="flex flex-wrap gap-2">
+        <button (click)="editProgram()"
+          class="px-3 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-1.5">
+          <span class="material-icons text-sm">edit</span> Edit
+        </button>
+        @if (program.status === 'draft') {
+          <button (click)="publishProgram()"
+            class="px-3 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors flex items-center gap-1.5">
+            <span class="material-icons text-sm">public</span> Publish
+          </button>
+        }
+        @if (program.status === 'published') {
+          <button (click)="archiveProgram()"
+            class="px-3 py-2 border border-amber-300 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-50 transition-colors flex items-center gap-1.5">
+            <span class="material-icons text-sm">archive</span> Archive
+          </button>
+        }
+        @if (program.status === 'archived') {
+          <button (click)="restoreToDraft()"
+            class="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-1.5">
+            <span class="material-icons text-sm">unarchive</span> Restore
+          </button>
+        }
+        <button (click)="confirmDelete()"
+          class="px-3 py-2 border border-red-200 text-red-500 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors flex items-center gap-1.5">
+          <span class="material-icons text-sm">delete_outline</span> Delete
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Loading -->
+  @if (isLoading) {
+    <div class="flex items-center justify-center py-24">
+      <div class="flex flex-col items-center gap-3 text-gray-400">
+        <span class="material-icons text-5xl animate-spin">refresh</span>
+        <p class="text-sm font-medium">Loading program...</p>
+      </div>
+    </div>
+  }
+
+  @if (loadError && !isLoading) {
+    <div class="bg-red-50 border border-red-200 rounded-xl p-6 flex items-center gap-3 text-red-700">
+      <span class="material-icons text-red-400 text-2xl">error_outline</span>
+      <div>
+        <p class="font-semibold">Failed to Load</p>
+        <p class="text-sm mt-0.5">{{ loadError }}</p>
+      </div>
+    </div>
+  }
+
+  @if (actionError) {
+    <div class="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3 text-red-700">
+      <span class="material-icons text-red-400">error_outline</span>
+      <span class="text-sm font-medium">{{ actionError }}</span>
+    </div>
+  }
+
+  @if (program && !isLoading) {
+
+    <!-- Status + Meta Bar -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-wrap items-center gap-4">
+      <span [class]="'px-3 py-1 rounded-full text-xs font-bold border ' + getStatusBadgeClass(program.status)">
+        {{ getStatusLabel(program.status) }}
+      </span>
+      <span [class]="'px-3 py-1 rounded-full text-xs font-semibold border capitalize ' + getLevelClass(program.level)">
+        {{ getLevelLabel(program.level) }}
+      </span>
+      @if (program.category) {
+        <span class="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+          {{ program.category }}
+        </span>
+      }
+      @if (program.language) {
+        <span class="text-xs text-gray-500 flex items-center gap-1">
+          <span class="material-icons text-xs">translate</span> {{ program.language }}
+        </span>
+      }
+      <div class="text-xs text-gray-500 flex items-center gap-1.5">
+        <span class="material-icons text-xs">schedule</span>
+        Created {{ formatDate(program.createdAt) }}
+      </div>
+      @if (program._id) {
+        <div class="text-xs text-gray-400 font-mono ml-auto">ID: {{ program._id }}</div>
+      }
+    </div>
+
+    <!-- Metric Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-4 text-white shadow-md">
+        <p class="text-xs text-gray-400">Modules</p>
+        <p class="text-3xl font-heading font-bold mt-1">{{ totalModules }}</p>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <p class="text-xs text-gray-500">Sections</p>
+        <p class="text-3xl font-heading font-bold mt-1 text-gray-800">{{ totalSections }}</p>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <p class="text-xs text-gray-500">Topics</p>
+        <p class="text-3xl font-heading font-bold mt-1 text-gray-800">{{ totalTopics }}</p>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+        <p class="text-xs text-gray-500">Duration</p>
+        <p class="text-3xl font-heading font-bold mt-1 text-gray-800">{{ formatDuration(totalDuration) }}</p>
+      </div>
+    </div>
+
+    <!-- Basic Info -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="bg-gray-50 border-b border-gray-100 px-6 py-4 flex items-center gap-2">
+        <span class="material-icons text-sm text-gray-400">info</span>
+        <h2 class="text-sm font-heading font-bold text-gray-700">Program Information</h2>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Title</p>
+          <p class="text-xl font-heading font-bold text-gray-900 mt-1">{{ program.title }}</p>
+        </div>
+        @if (program.subtitle) {
+          <div>
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Subtitle</p>
+            <p class="text-gray-700 text-sm mt-1">{{ program.subtitle }}</p>
+          </div>
+        }
+        <div>
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Description</p>
+          <p class="text-gray-700 text-sm mt-1.5 leading-relaxed">{{ program.description }}</p>
+        </div>
+        @if (program.tags?.length) {
+          <div>
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Tags</p>
+            <div class="flex flex-wrap gap-2">
+              @for (tag of program.tags; track tag) {
+                <span class="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">{{ tag }}</span>
+              }
+            </div>
+          </div>
+        }
+        @if (program.duration) {
+          <div>
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Total Duration</p>
+            <p class="text-gray-700 text-sm mt-1">{{ program.duration }} hours</p>
+          </div>
+        }
+        @if (program.thumbnail) {
+          <div>
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Thumbnail</p>
+            <img [src]="program.thumbnail" alt="Program thumbnail"
+              class="w-40 h-24 object-cover rounded-lg border border-gray-200" />
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Instructors -->
+    @if (program.instructors?.length) {
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="bg-gray-50 border-b border-gray-100 px-6 py-4 flex items-center gap-2">
+          <span class="material-icons text-sm text-gray-400">people</span>
+          <h2 class="text-sm font-heading font-bold text-gray-700">Instructors</h2>
+          <span class="ml-auto text-xs font-bold bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">
+            {{ program.instructors!.length }}
+          </span>
+        </div>
+        <div class="p-6 flex flex-wrap gap-3">
+          @for (inst of program.instructors!; track $index) {
+            <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5">
+              <div class="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center">
+                <span class="material-icons text-xs text-gray-500">person</span>
+              </div>
+              <span class="text-sm font-medium text-gray-700">{{ getInstructorDisplay(inst) }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Curriculum -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="bg-gray-50 border-b border-gray-100 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="material-icons text-sm text-gray-400">view_timeline</span>
+          <h2 class="text-sm font-heading font-bold text-gray-700">Curriculum</h2>
+          <span class="text-xs font-bold bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">
+            {{ totalModules }} module{{ totalModules !== 1 ? 's' : '' }}
+          </span>
+        </div>
+        <div class="flex gap-2">
+          <button (click)="expandAll()" class="text-xs text-gray-500 hover:text-gray-800 transition-colors">Expand all</button>
+          <span class="text-gray-300">|</span>
+          <button (click)="collapseAll()" class="text-xs text-gray-500 hover:text-gray-800 transition-colors">Collapse all</button>
+        </div>
+      </div>
+
+      @if (!program.modules?.length) {
+        <div class="p-8 text-center text-gray-400">
+          <span class="material-icons text-4xl text-gray-300">layers_clear</span>
+          <p class="text-sm mt-2">No curriculum added yet.</p>
+          <button (click)="editProgram()"
+            class="mt-3 text-xs text-gray-500 hover:text-gray-800 underline transition-colors">Add curriculum</button>
+        </div>
+      } @else {
+        <div class="divide-y divide-gray-100">
+          @for (mod of program.modules!; track mod._id ?? mod.tempId; let mi = $index) {
+            <div>
+              <!-- Module Row -->
+              <button (click)="toggleModule(mod._id)"
+                class="w-full flex items-center gap-3 px-6 py-4 hover:bg-gray-50 transition-colors text-left">
+                <div class="w-8 h-8 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center shrink-0">
+                  {{ mi + 1 }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-bold text-gray-900">{{ mod.title }}</p>
+                  @if (mod.description) {
+                    <p class="text-xs text-gray-500 mt-0.5">{{ mod.description }}</p>
+                  }
+                </div>
+                <span class="text-xs text-gray-400 shrink-0">
+                  {{ mod.sections?.length ?? 0 }} section{{ (mod.sections?.length ?? 0) !== 1 ? 's' : '' }}
+                </span>
+                <span class="material-icons text-gray-400 text-sm shrink-0">
+                  {{ isModuleExpanded(mod._id) ? 'expand_less' : 'expand_more' }}
+                </span>
+              </button>
+
+              <!-- Sections -->
+              @if (isModuleExpanded(mod._id)) {
+                <div class="bg-gray-50 border-t border-gray-100">
+                  @for (sec of mod.sections ?? []; track sec._id ?? sec.tempId; let si = $index) {
+                    <div class="border-b border-gray-100 last:border-b-0">
+                      <!-- Section Row -->
+                      <button (click)="toggleSection(sec._id)"
+                        class="w-full flex items-center gap-3 px-8 py-3 hover:bg-gray-100 transition-colors text-left">
+                        <span class="material-icons text-xs text-gray-400">
+                          {{ isSectionExpanded(sec._id) ? 'folder_open' : 'folder' }}
+                        </span>
+                        <span class="flex-1 text-sm font-semibold text-gray-700">{{ sec.title }}</span>
+                        <span class="text-xs text-gray-400 shrink-0">
+                          {{ getSectionTopicCount(sec) }} topic{{ getSectionTopicCount(sec) !== 1 ? 's' : '' }}
+                        </span>
+                        <span class="material-icons text-gray-400 text-xs shrink-0">
+                          {{ isSectionExpanded(sec._id) ? 'expand_less' : 'expand_more' }}
+                        </span>
+                      </button>
+
+                      <!-- Topics -->
+                      @if (isSectionExpanded(sec._id)) {
+                        <div class="pb-2">
+                          @for (topic of sec.topics ?? []; track topic._id ?? topic.tempId; let ti = $index) {
+                            <div class="flex items-center gap-3 px-10 py-2.5 hover:bg-gray-100 transition-colors">
+                              <span class="material-icons text-sm text-gray-400">{{ getTopicTypeIcon(topic.type) }}</span>
+                              <span class="flex-1 text-sm text-gray-700">{{ topic.title }}</span>
+                              <span class="text-xs px-2 py-0.5 bg-white border border-gray-200 rounded-full text-gray-500 capitalize">
+                                {{ topic.type }}
+                              </span>
+                              @if (topic.duration) {
+                                <span class="text-xs text-gray-400">{{ topic.duration }}min</span>
+                              }
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+  }
+
+</div>

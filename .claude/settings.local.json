@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/gs/Documents/GitHub/ceekulmissionapi/src/**)",
+      "Bash(npx tsc:*)"
+    ],
+    "additionalDirectories": [
+      "/Users/gs/Documents/GitHub/ceekulmissionapi/src/controllers/workshopController",
+      "/Users/gs/Documents/GitHub/ceekulmissionapi/src/middlewares"
+    ]
+  }
+}

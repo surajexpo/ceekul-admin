@@ -1,0 +1,109 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+      <h1 class="text-2xl font-heading font-bold text-gray-800">User Management</h1>
+      <p class="text-sm text-gray-500 mt-1">Manage platform users, roles, and restrictions.</p>
+    </div>
+    <div class="flex gap-3 w-full sm:w-auto">
+      <div class="relative flex-1 sm:w-64">
+        <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">search</span>
+        <input type="text" placeholder="Search users..." 
+               class="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-black focus:border-black outline-none">
+      </div>
+      <button class="px-4 py-2 bg-black text-white rounded-lg shadow-md hover:bg-gray-800 transition-colors font-medium text-sm flex items-center gap-2 shrink-0">
+        <span class="material-icons text-sm">person_add</span> Add User
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex gap-4 overflow-x-auto custom-scrollbar">
+    <select class="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-black">
+      <option value="">All Roles</option>
+      <option value="Admin">Admin</option>
+      <option value="Teacher">Teacher</option>
+      <option value="Student">Student</option>
+      <option value="Researcher">Researcher</option>
+    </select>
+    <select class="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 focus:outline-none focus:ring-1 focus:ring-black">
+      <option value="">All Statuses</option>
+      <option value="Active">Active</option>
+      <option value="Suspended">Suspended</option>
+      <option value="Pending">Pending</option>
+    </select>
+    <button class="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2">
+      <span class="material-icons text-sm">filter_list</span> More Filters
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm text-gray-600">
+        <thead class="bg-gray-50 text-gray-700 font-heading border-b border-gray-100">
+          <tr>
+            <th class="px-6 py-4 font-semibold">User</th>
+            <th class="px-6 py-4 font-semibold">Role</th>
+            <th class="px-6 py-4 font-semibold">Status</th>
+            <th class="px-6 py-4 font-semibold">Joined Date</th>
+            <th class="px-6 py-4 font-semibold text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          @for (user of usersList; track user.id) {
+            <tr class="hover:bg-gray-50 transition-colors group">
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full bg-light-grey text-gray-500 flex items-center justify-center font-bold">
+                    {{ user.name.charAt(0) }}
+                  </div>
+                  <div>
+                    <div class="font-medium text-gray-900 group-hover:text-black transition-colors">{{ user.name }}</div>
+                    <div class="text-xs text-gray-500">{{ user.email }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <span [class]="'px-2.5 py-1 rounded-full text-xs font-medium ' + getRoleBadgeClass(user.role)">
+                  {{ user.role }}
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <span [class]="'px-2.5 py-1 rounded-full text-xs font-medium flex inline-flex items-center gap-1 w-max ' + getStatusBadgeClass(user.status)">
+                  <span class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                  {{ user.status }}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-gray-500">{{ user.joined }}</td>
+              <td class="px-6 py-4 text-right">
+                <div class="flex justify-end gap-2 text-gray-400">
+                  <button class="hover:text-black transition-colors p-1" title="Edit">
+                    <span class="material-icons text-sm">edit</span>
+                  </button>
+                  <button class="hover:text-gray-700 transition-colors p-1" title="Suspend">
+                    <span class="material-icons text-sm">block</span>
+                  </button>
+                  <button class="hover:text-gray-700 transition-colors p-1" title="More details">
+                    <span class="material-icons text-sm">chevron_right</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500">
+      <span class="hidden sm:inline">Showing 1 to 6 of 12,450 results</span>
+      <div class="flex gap-1.5">
+        <button class="px-3 py-1.5 border border-gray-200 rounded-md hover:bg-gray-50 disabled:opacity-50 font-medium">Prev</button>
+        <button class="px-3 py-1.5 bg-black text-white rounded-md font-medium">1</button>
+        <button class="px-3 py-1.5 border border-gray-200 rounded-md hover:bg-gray-50 font-medium">2</button>
+        <button class="px-3 py-1.5 border border-gray-200 rounded-md hover:bg-gray-50 font-medium">3</button>
+        <span class="px-2 py-1.5">...</span>
+        <button class="px-3 py-1.5 border border-gray-200 rounded-md hover:bg-gray-50 font-medium">Next</button>
+      </div>
+    </div>
+  </div>
+</div>

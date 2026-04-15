@@ -1,0 +1,25 @@
+<aside class="h-full flex flex-col bg-black text-white w-64 transition-all duration-300">
+  <div class="h-16 flex items-center justify-center border-b border-white/10 shrink-0">
+    <span class="text-xl font-heading font-bold tracking-wider text-gray-500">CEEKUL <span class="text-white">MISSION</span></span>
+  </div>
+  
+  <nav class="flex-1 overflow-y-auto py-4 custom-scrollbar">
+    <ul class="space-y-1 px-3">
+      <li *ngFor="let item of menuItems">
+        <a [routerLink]="item.route" 
+           routerLinkActive="bg-white/10 text-gray-500 border-r-4 border-gray-500"
+           class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-200">
+          <span class="material-icons text-xl">{{ item.icon }}</span>
+          <span class="font-medium font-sans">{{ item.label }}</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="p-4 border-t border-white/10">
+    <button class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-500/10 hover:text-gray-500 transition-colors duration-200">
+      <span class="material-icons text-xl">logout</span>
+      <span class="font-medium font-sans">Logout</span>
+    </button>
+  </div>
+</aside>

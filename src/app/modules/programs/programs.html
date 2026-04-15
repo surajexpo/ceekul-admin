@@ -1,0 +1,248 @@
+<div class="space-y-6">
+
+  <!-- Delete Confirmation Modal -->
+  @if (deleteTargetId) {
+    <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+            <span class="material-icons text-red-500">delete_forever</span>
+          </div>
+          <div>
+            <h3 class="font-heading font-bold text-gray-900">Delete Program?</h3>
+            <p class="text-sm text-gray-600 mt-1">
+              This will permanently delete <strong>{{ deleteTargetTitle }}</strong> and all its curriculum. This action cannot be undone.
+            </p>
+          </div>
+        </div>
+        @if (deleteError) {
+          <div class="bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 flex items-center gap-2 text-red-700 text-sm">
+            <span class="material-icons text-sm">error_outline</span>{{ deleteError }}
+          </div>
+        }
+        <div class="flex gap-3 justify-end pt-2">
+          <button (click)="cancelDelete()" [disabled]="isDeleting"
+            class="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50">
+            Cancel
+          </button>
+          <button (click)="deleteProgram()" [disabled]="isDeleting"
+            class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-bold hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center gap-2">
+            @if (isDeleting) { <span class="material-icons text-sm animate-spin">refresh</span> }
+            Delete Program
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+      <h1 class="text-2xl font-heading font-bold text-gray-800">Programs</h1>
+      <p class="text-sm text-gray-500 mt-1">Manage your structured learning programs and courses.</p>
+    </div>
+    <div class="flex gap-3">
+      <button (click)="loadPrograms()"
+        class="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg shadow-sm hover:bg-gray-50 transition-colors font-medium text-sm flex items-center gap-2">
+        <span class="material-icons text-sm">refresh</span> Refresh
+      </button>
+      <button (click)="createProgram()"
+        class="px-4 py-2 bg-black text-white rounded-lg shadow-sm hover:bg-gray-800 transition-colors font-medium text-sm flex items-center gap-2">
+        <span class="material-icons text-sm">add</span> New Program
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Banner -->
+  @if (loadError) {
+    <div class="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+      <span class="material-icons text-red-400 text-base">error_outline</span>
+      <span class="text-sm text-red-700 font-medium">{{ loadError }}</span>
+    </div>
+  }
+
+  <!-- Stat Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+    <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-5 text-white shadow-md relative overflow-hidden group">
+      <div class="absolute -right-5 -top-5 w-20 h-20 bg-white/10 rounded-full group-hover:scale-110 transition-transform"></div>
+      <p class="text-xs text-gray-400 font-medium relative z-10">Published</p>
+      <p class="text-4xl font-heading font-bold mt-1 relative z-10">{{ publishedCount }}</p>
+      <p class="text-xs text-gray-400 mt-3 flex items-center gap-1 relative z-10">
+        <span class="material-icons text-xs">public</span> Live & accessible
+      </p>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+      <p class="text-xs text-gray-500 font-medium">Drafts</p>
+      <p class="text-4xl font-heading font-bold mt-1 text-gray-800">{{ draftCount }}</p>
+      <p class="text-xs text-gray-400 mt-3">In progress</p>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+      <p class="text-xs text-gray-500 font-medium">Archived</p>
+      <p class="text-4xl font-heading font-bold mt-1 text-gray-800">{{ archivedCount }}</p>
+      <p class="text-xs text-gray-400 mt-3">No longer active</p>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="bg-white border border-gray-100 rounded-xl p-4 flex flex-wrap items-center gap-3 shadow-sm">
+    <span class="material-icons text-sm text-gray-400">filter_list</span>
+    <select [(ngModel)]="filterStatus" (ngModelChange)="onFilterChange()"
+      class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-gray-300">
+      <option value="">All Statuses</option>
+      <option value="published">Published</option>
+      <option value="draft">Draft</option>
+      <option value="archived">Archived</option>
+    </select>
+    <select [(ngModel)]="filterCategory" (ngModelChange)="onFilterChange()"
+      class="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-gray-300">
+      <option value="">All Categories</option>
+      @for (cat of categories; track cat) {
+        <option [value]="cat">{{ cat }}</option>
+      }
+    </select>
+    @if (filterStatus || filterCategory) {
+      <button (click)="clearFilters()"
+        class="text-xs text-gray-500 hover:text-gray-800 flex items-center gap-1 transition-colors">
+        <span class="material-icons text-xs">close</span> Clear
+      </button>
+    }
+    <span class="ml-auto text-xs text-gray-400">{{ filtered.length }} result{{ filtered.length !== 1 ? 's' : '' }}</span>
+  </div>
+
+  <!-- Table -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+
+    @if (isLoading) {
+      <div class="flex items-center justify-center py-20">
+        <div class="flex flex-col items-center gap-3 text-gray-400">
+          <span class="material-icons text-4xl animate-spin">refresh</span>
+          <p class="text-sm font-medium">Loading programs...</p>
+        </div>
+      </div>
+    }
+
+    @if (!isLoading && filtered.length === 0) {
+      <div class="flex flex-col items-center justify-center py-20 text-center">
+        <span class="material-icons text-6xl text-gray-200">school</span>
+        <p class="text-gray-600 font-semibold mt-4">
+          {{ programs.length === 0 ? 'No programs yet' : 'No programs match your filters' }}
+        </p>
+        <p class="text-gray-400 text-sm mt-1 mb-5">
+          {{ programs.length === 0 ? 'Create your first program to get started.' : 'Try adjusting the filters above.' }}
+        </p>
+        @if (programs.length === 0) {
+          <button (click)="createProgram()"
+            class="px-5 py-2.5 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors flex items-center gap-2">
+            <span class="material-icons text-sm">add</span> Create Program
+          </button>
+        }
+      </div>
+    }
+
+    @if (!isLoading && filtered.length > 0) {
+      <table class="w-full text-left text-sm text-gray-600">
+        <thead class="bg-gray-50 text-gray-700 font-heading border-b border-gray-100 uppercase text-[10px] tracking-wider font-bold">
+          <tr>
+            <th class="px-6 py-4">Program</th>
+            <th class="px-6 py-4">Level</th>
+            <th class="px-6 py-4">Status</th>
+            <th class="px-6 py-4">Curriculum</th>
+            <th class="px-6 py-4">Created</th>
+            <th class="px-6 py-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          @for (program of filtered; track program._id) {
+            <tr class="hover:bg-gray-50 transition-colors group">
+
+              <!-- Title + Category -->
+              <td class="px-6 py-4 max-w-xs">
+                <div class="font-bold text-gray-900 group-hover:text-black truncate">{{ program.title }}</div>
+                @if (program.subtitle) {
+                  <div class="text-xs text-gray-500 mt-0.5 truncate">{{ program.subtitle }}</div>
+                }
+                @if (program.category) {
+                  <span class="inline-block mt-1 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{{ program.category }}</span>
+                }
+              </td>
+
+              <!-- Level -->
+              <td class="px-6 py-4">
+                <span [class]="'px-2.5 py-1 rounded-full text-xs font-semibold capitalize ' + getLevelBadgeClass(program.level)">
+                  {{ program.level }}
+                </span>
+              </td>
+
+              <!-- Status -->
+              <td class="px-6 py-4">
+                <span [class]="'px-2.5 py-1 rounded-full text-xs font-bold ' + getStatusBadgeClass(program.status)">
+                  {{ getStatusLabel(program.status) }}
+                </span>
+              </td>
+
+              <!-- Curriculum -->
+              <td class="px-6 py-4">
+                <div class="text-xs text-gray-600 space-y-0.5">
+                  <div class="flex items-center gap-1">
+                    <span class="material-icons text-xs text-gray-400">view_module</span>
+                    {{ getModuleCount(program) }} module{{ getModuleCount(program) !== 1 ? 's' : '' }}
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <span class="material-icons text-xs text-gray-400">topic</span>
+                    {{ getTotalTopics(program) }} topic{{ getTotalTopics(program) !== 1 ? 's' : '' }}
+                  </div>
+                </div>
+              </td>
+
+              <!-- Created -->
+              <td class="px-6 py-4 text-xs text-gray-500">{{ formatDate(program.createdAt) }}</td>
+
+              <!-- Actions -->
+              <td class="px-6 py-4 text-right">
+                <div class="flex items-center justify-end gap-1">
+                  @if (program.status === 'draft') {
+                    <button (click)="publishProgram(program._id)"
+                      class="text-gray-800 border border-gray-400 hover:bg-gray-200 rounded-md px-2.5 py-1 text-xs font-bold transition-colors mr-1">
+                      Publish
+                    </button>
+                  }
+                  @if (program.status === 'published') {
+                    <button (click)="archiveProgram(program._id)"
+                      class="text-amber-700 border border-amber-300 hover:bg-amber-50 rounded-md px-2.5 py-1 text-xs font-bold transition-colors mr-1">
+                      Archive
+                    </button>
+                  }
+                  <button (click)="viewProgram(program._id)" title="View"
+                    class="text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors p-1.5 rounded-md">
+                    <span class="material-icons text-sm">open_in_new</span>
+                  </button>
+                  <button (click)="editProgram(program._id)" title="Edit"
+                    class="text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors p-1.5 rounded-md">
+                    <span class="material-icons text-sm">edit</span>
+                  </button>
+                  <button (click)="confirmDelete(program._id)" title="Delete"
+                    class="text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors p-1.5 rounded-md">
+                    <span class="material-icons text-sm">delete_outline</span>
+                  </button>
+                </div>
+              </td>
+
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <div class="px-6 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+        <span class="text-xs text-gray-500">
+          Showing {{ filtered.length }} of {{ pagination.total }} program{{ pagination.total !== 1 ? 's' : '' }}
+        </span>
+        <button (click)="createProgram()"
+          class="text-xs font-medium text-gray-600 hover:text-gray-900 flex items-center gap-1 transition-colors">
+          <span class="material-icons text-xs">add</span> New Program
+        </button>
+      </div>
+    }
+
+  </div>
+
+</div>

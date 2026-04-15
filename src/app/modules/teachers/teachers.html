@@ -1,0 +1,98 @@
+<div class="space-y-6">
+  <div class="flex justify-between items-center sm:flex-row flex-col gap-4">
+    <div>
+      <h1 class="text-2xl font-heading font-bold text-gray-800">Teacher Verification</h1>
+      <p class="text-sm text-gray-500 mt-1">Review applicant profiles, verify credentials, and approve access to teach.</p>
+    </div>
+    <div class="flex gap-2">
+      <button class="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">History</button>
+      <button class="px-4 py-2 bg-black text-white rounded-lg shadow-md hover:bg-gray-800 transition-colors font-medium text-sm flex items-center gap-2">
+        <span class="material-icons text-sm">refresh</span> Refresh Queue
+      </button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Pending List -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-[600px]">
+      <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+        <h2 class="text-lg font-heading font-bold text-gray-800">Pending Applications</h2>
+        <span class="bg-gray-500 text-white px-2.5 py-1 rounded-full text-xs font-bold shadow-sm">{{ pendingTeachers.length }}</span>
+      </div>
+      <div class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+        @for (teacher of pendingTeachers; track teacher.id) {
+          <div class="border border-gray-100 p-4 rounded-xl hover:shadow-md transition-shadow cursor-pointer hover:border-black/50 group">
+            <div class="flex justify-between items-start">
+              <div class="flex gap-4">
+                <div class="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center font-bold font-heading shadow-sm group-hover:scale-105 transition-transform">
+                  {{ teacher.initial }}
+                </div>
+                <div>
+                  <h3 class="font-bold text-gray-800 group-hover:text-black transition-colors">{{ teacher.name }}</h3>
+                  <p class="text-sm text-gray-500">{{ teacher.field }}</p>
+                  <div class="flex flex-wrap items-center gap-2 mt-2 text-xs">
+                    <span class="text-gray-400 flex items-center"><span class="material-icons text-[14px] mr-1">schedule</span>{{ teacher.applied }}</span>
+                    @if(teacher.docVerified) {
+                      <span class="text-gray-700 flex items-center bg-gray-200 px-1.5 py-0.5 rounded font-medium"><span class="material-icons text-[14px] mr-1">verified</span>Docs Verified</span>
+                    } @else {
+                      <span class="text-gray-700 flex items-center bg-gray-200 px-1.5 py-0.5 rounded font-medium"><span class="material-icons text-[14px] mr-1">pending_actions</span>Needs Review</span>
+                    }
+                  </div>
+                </div>
+              </div>
+              <span class="material-icons text-gray-300 group-hover:text-black transition-colors">chevron_right</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Review Detail Panel -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col h-[600px]">
+      <div class="p-6 border-b border-gray-100">
+        <h2 class="text-lg font-heading font-bold text-gray-800">Application Review</h2>
+      </div>
+      <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
+        <!-- Detail View -->
+        <div class="flex flex-col items-center">
+          <div class="w-24 h-24 rounded-full bg-black text-white flex items-center justify-center font-bold text-3xl shadow-md mb-4 ring-4 ring-black/20">
+            A
+          </div>
+          <h2 class="text-xl font-heading font-bold text-gray-800">Prof. Alan Turing</h2>
+          <p class="text-gray-500 font-medium mb-1">Computable Vision Expert</p>
+          <a href="#" class="text-sm text-black hover:underline mb-6">view public profile</a>
+          
+          <div class="w-full space-y-4">
+            <div class="bg-light-grey p-5 rounded-xl">
+              <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Education & Experience</h4>
+              <p class="text-sm text-gray-800 font-medium font-sans">Ph.D. in Computer Science - Cambridge University</p>
+              <p class="text-sm text-gray-600 mt-1">10+ years teaching experience in applied mathematics and computer vision systems.</p>
+            </div>
+            
+            <div class="bg-light-grey p-5 rounded-xl">
+              <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Submitted Documents</h4>
+              <ul class="space-y-3 mt-2">
+                <li class="flex items-center justify-between text-sm bg-white p-3 rounded-lg border border-gray-200 shadow-sm hover:border-black transition-colors cursor-pointer group">
+                  <span class="flex items-center gap-3 text-gray-700 font-medium"><span class="material-icons text-gray-700 group-hover:scale-110 transition-transform">picture_as_pdf</span> Resume_2025.pdf</span>
+                  <span class="material-icons text-gray-700">check_circle</span>
+                </li>
+                <li class="flex items-center justify-between text-sm bg-white p-3 rounded-lg border border-gray-200 shadow-sm hover:border-black transition-colors cursor-pointer group">
+                  <span class="flex items-center gap-3 text-gray-700 font-medium"><span class="material-icons text-gray-800 group-hover:scale-110 transition-transform">image</span> ID_Proof.jpg</span>
+                  <span class="material-icons text-gray-700">check_circle</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="p-4 border-t border-gray-100 bg-gray-50 flex gap-4 sticky bottom-0">
+        <button class="flex-1 py-3 bg-white border-2 border-green-500 text-gray-800 rounded-xl hover:bg-gray-200 transition-colors font-bold shadow-sm flex items-center justify-center gap-2">
+          <span class="material-icons">check_circle</span> Approve
+        </button>
+        <button class="flex-1 py-3 bg-white border-2 border-red-500 text-gray-800 rounded-xl hover:bg-gray-100 transition-colors font-bold shadow-sm flex items-center justify-center gap-2">
+          <span class="material-icons">cancel</span> Reject
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

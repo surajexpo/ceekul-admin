@@ -1,0 +1,370 @@
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+      <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+        <button (click)="goBack()" class="hover:text-gray-800 transition-colors flex items-center gap-1">
+          <span class="material-icons text-sm">arrow_back</span> Workshops
+        </button>
+        @if (workshop) {
+          <span class="material-icons text-xs">chevron_right</span>
+          <span class="text-gray-800 font-medium truncate max-w-xs">{{ workshop.workshopTitle }}</span>
+        }
+      </div>
+      <h1 class="text-2xl font-heading font-bold text-gray-800">Workshop Details</h1>
+    </div>
+
+    @if (workshop) {
+      <div class="flex flex-wrap gap-2">
+        <button (click)="cloneWorkshop()"
+          class="px-3 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-1.5">
+          <span class="material-icons text-sm">content_copy</span> Clone
+        </button>
+        <button (click)="editWorkshop()"
+          class="px-3 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-1.5">
+          <span class="material-icons text-sm">edit</span> Edit
+        </button>
+        @if (workshop.status !== 'published') {
+          <button (click)="publishWorkshop()" [disabled]="isPublishing"
+            class="px-3 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors flex items-center gap-1.5 disabled:opacity-50">
+            @if (isPublishing) { <span class="material-icons text-sm animate-spin">refresh</span> }
+            @else { <span class="material-icons text-sm">publish</span> }
+            Publish
+          </button>
+        }
+        <button (click)="confirmDelete()"
+          class="px-3 py-2 border border-red-200 text-red-500 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors flex items-center gap-1.5">
+          <span class="material-icons text-sm">delete_outline</span> Delete
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading) {
+    <div class="flex items-center justify-center py-24">
+      <div class="flex flex-col items-center gap-3 text-gray-400">
+        <span class="material-icons text-5xl animate-spin">refresh</span>
+        <p class="text-sm font-medium">Loading workshop...</p>
+      </div>
+    </div>
+  }
+
+  <!-- Load Error -->
+  @if (loadError && !isLoading) {
+    <div class="bg-red-50 border border-red-200 rounded-xl p-6 flex items-center gap-3 text-red-700">
+      <span class="material-icons text-red-400 text-2xl">error_outline</span>
+      <div>
+        <p class="font-semibold">Failed to Load</p>
+        <p class="text-sm mt-0.5">{{ loadError }}</p>
+      </div>
+    </div>
+  }
+
+  <!-- Action Error -->
+  @if (actionError) {
+    <div class="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3 text-red-700">
+      <span class="material-icons text-red-400">error_outline</span>
+      <span class="text-sm font-medium">{{ actionError }}</span>
+    </div>
+  }
+
+  <!-- Delete Confirmation Modal -->
+  @if (showDeleteConfirm) {
+    <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+            <span class="material-icons text-red-500">delete_forever</span>
+          </div>
+          <div>
+            <h3 class="font-heading font-bold text-gray-900">Delete Workshop?</h3>
+            <p class="text-sm text-gray-600 mt-1">This will permanently delete <strong>{{ workshop?.workshopTitle }}</strong> and all its schedules. This action cannot be undone.</p>
+          </div>
+        </div>
+        <div class="flex gap-3 justify-end pt-2">
+          <button (click)="cancelDelete()" class="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+            Cancel
+          </button>
+          <button (click)="deleteWorkshop()" [disabled]="isDeleting"
+            class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-bold hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center gap-2">
+            @if (isDeleting) { <span class="material-icons text-sm animate-spin">refresh</span> }
+            Delete Workshop
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Schedule Delete Confirmation Modal -->
+  @if (scheduleDeleteTargetId) {
+    <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+            <span class="material-icons text-red-500">event_busy</span>
+          </div>
+          <div>
+            <h3 class="font-heading font-bold text-gray-900">Remove Schedule?</h3>
+            <p class="text-sm text-gray-600 mt-1">This session will be permanently removed from the workshop. This action cannot be undone.</p>
+          </div>
+        </div>
+        <div class="flex gap-3 justify-end pt-2">
+          <button (click)="cancelDeleteSchedule()" [disabled]="isDeletingSchedule"
+            class="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50">
+            Cancel
+          </button>
+          <button (click)="deleteSchedule()" [disabled]="isDeletingSchedule"
+            class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-bold hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center gap-2">
+            @if (isDeletingSchedule) {
+              <span class="material-icons text-sm animate-spin">refresh</span>
+            }
+            Remove Session
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (workshop && !isLoading) {
+    <!-- Status + Meta Bar -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-wrap items-center gap-4">
+      <span [class]="'px-3 py-1 rounded-full text-xs font-bold border ' + getStatusBadgeClass(workshop.status)">
+        {{ getStatusLabel(workshop.status) }}
+      </span>
+      <div class="text-xs text-gray-500 flex items-center gap-1.5">
+        <span class="material-icons text-xs">schedule</span>
+        Created {{ formatDate(workshop.createdAt ?? '') }}
+      </div>
+      @if (workshop.updatedAt && workshop.updatedAt !== workshop.createdAt) {
+        <div class="text-xs text-gray-500 flex items-center gap-1.5">
+          <span class="material-icons text-xs">update</span>
+          Updated {{ formatDate(workshop.updatedAt) }}
+        </div>
+      }
+      @if (workshop._id) {
+        <div class="text-xs text-gray-400 font-mono ml-auto">ID: {{ workshop._id }}</div>
+      }
+    </div>
+
+    <!-- Metrics -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-5 text-white shadow-md">
+        <p class="text-xs text-gray-400 font-medium">Total Sessions</p>
+        <p class="text-3xl font-heading font-bold mt-1">{{ workshop.schedules.length }}</p>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <p class="text-xs text-gray-500 font-medium">Revenue Potential</p>
+        <p class="text-3xl font-heading font-bold mt-1 text-gray-800">${{ getTotalRevenue() | number: '1.0-0' }}</p>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+        <p class="text-xs text-gray-500 font-medium">Content Hours</p>
+        <p class="text-3xl font-heading font-bold mt-1 text-gray-800">3 hrs</p>
+        <p class="text-xs text-gray-400 mt-1">+ 10-min ad break</p>
+      </div>
+    </div>
+
+    <!-- Basic Info -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="bg-gray-50 border-b border-gray-100 px-6 py-4 flex items-center gap-2">
+        <span class="material-icons text-sm text-gray-400">info</span>
+        <h2 class="text-sm font-heading font-bold text-gray-700">Workshop Information</h2>
+      </div>
+      <div class="p-6 space-y-5">
+        <div>
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Title</p>
+          <p class="text-gray-900 font-bold text-xl mt-1 font-heading">{{ workshop.workshopTitle }}</p>
+        </div>
+        <div>
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Description</p>
+          <p class="text-gray-700 text-sm mt-1.5 leading-relaxed">{{ workshop.workshopDescription }}</p>
+        </div>
+        <div>
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Expert / Presenter</p>
+          <p class="text-gray-700 text-sm mt-1.5 leading-relaxed">{{ workshop.expertDescription }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3-Hour Plan -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="bg-gray-50 border-b border-gray-100 px-6 py-4 flex items-center gap-2">
+        <span class="material-icons text-sm text-gray-400">view_timeline</span>
+        <h2 class="text-sm font-heading font-bold text-gray-700">3-Hour Content Plan</h2>
+      </div>
+      <div class="p-6">
+        <div class="space-y-4">
+          <!-- Hour 1 -->
+          <div class="flex gap-4 items-stretch">
+            <div class="flex flex-col items-center">
+              <div class="w-9 h-9 rounded-full bg-gray-900 text-white flex items-center justify-center font-bold text-sm shrink-0">1</div>
+              <div class="w-0.5 bg-gray-200 flex-1 mt-2 mb-0"></div>
+            </div>
+            <div class="flex-1 border border-gray-200 rounded-xl p-4 mb-2">
+              <p class="font-bold text-gray-900">{{ workshop.threeHourPlan?.hour1?.title || 'Hour 1' }}</p>
+              <p class="text-sm text-gray-600 mt-1 leading-relaxed">{{ workshop.threeHourPlan?.hour1?.description || '—' }}</p>
+              <div class="flex gap-2 mt-2">
+                @if (workshop.threeHourPlan?.hour1?.expertAllowed) {
+                  <span class="text-xs bg-gray-100 border border-gray-200 text-gray-600 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span class="material-icons text-xs">verified</span> Expert
+                  </span>
+                }
+                @if (workshop.threeHourPlan?.hour1?.instructorAllowed) {
+                  <span class="text-xs bg-gray-100 border border-gray-200 text-gray-600 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span class="material-icons text-xs">school</span> Instructor
+                  </span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Ad Break -->
+          <div class="flex gap-4 items-center">
+            <div class="w-9 flex justify-center">
+              <span class="material-icons text-amber-400 text-base">campaign</span>
+            </div>
+            <div class="flex-1 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 flex items-center justify-between">
+              <span class="text-sm font-bold text-amber-700 flex items-center gap-2">
+                <span class="material-icons text-sm">timer</span> 10-min Ad Break
+              </span>
+              <span class="text-xs text-amber-500">Auto-inserted</span>
+            </div>
+          </div>
+
+          <!-- Hour 2 -->
+          <div class="flex gap-4 items-stretch">
+            <div class="flex flex-col items-center">
+              <div class="w-9 h-9 rounded-full bg-gray-600 text-white flex items-center justify-center font-bold text-sm shrink-0">2</div>
+              <div class="w-0.5 bg-gray-200 flex-1 mt-2"></div>
+            </div>
+            <div class="flex-1 border border-gray-200 rounded-xl p-4 mb-2">
+              <p class="font-bold text-gray-900">{{ workshop.threeHourPlan?.hour2?.title || 'Hour 2' }}</p>
+              <p class="text-sm text-gray-600 mt-1 leading-relaxed">{{ workshop.threeHourPlan?.hour2?.description || '—' }}</p>
+              <div class="flex gap-2 mt-2">
+                @if (workshop.threeHourPlan?.hour2?.expertAllowed) {
+                  <span class="text-xs bg-gray-100 border border-gray-200 text-gray-600 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span class="material-icons text-xs">verified</span> Expert
+                  </span>
+                }
+                @if (workshop.threeHourPlan?.hour2?.instructorAllowed) {
+                  <span class="text-xs bg-gray-100 border border-gray-200 text-gray-600 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span class="material-icons text-xs">school</span> Instructor
+                  </span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Hour 3 -->
+          <div class="flex gap-4 items-start">
+            <div class="w-9 h-9 rounded-full bg-gray-400 text-white flex items-center justify-center font-bold text-sm shrink-0">3</div>
+            <div class="flex-1 border border-gray-200 rounded-xl p-4">
+              <p class="font-bold text-gray-900">{{ workshop.threeHourPlan?.hour3?.title || 'Hour 3' }}</p>
+              <p class="text-sm text-gray-600 mt-1 leading-relaxed">{{ workshop.threeHourPlan?.hour3?.description || '—' }}</p>
+              <div class="flex gap-2 mt-2">
+                @if (workshop.threeHourPlan?.hour3?.expertAllowed) {
+                  <span class="text-xs bg-gray-100 border border-gray-200 text-gray-600 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span class="material-icons text-xs">verified</span> Expert
+                  </span>
+                }
+                @if (workshop.threeHourPlan?.hour3?.instructorAllowed) {
+                  <span class="text-xs bg-gray-100 border border-gray-200 text-gray-600 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span class="material-icons text-xs">school</span> Instructor
+                  </span>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schedules -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="bg-gray-50 border-b border-gray-100 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="material-icons text-sm text-gray-400">calendar_month</span>
+          <h2 class="text-sm font-heading font-bold text-gray-700">Schedules</h2>
+        </div>
+        <span class="text-xs font-bold bg-gray-200 text-gray-600 px-2.5 py-1 rounded-full">
+          {{ scheduleCountLabel }}
+        </span>
+      </div>
+
+      @if (!workshop.schedules || workshop.schedules.length === 0) {
+        <div class="p-8 text-center text-gray-400">
+          <span class="material-icons text-4xl text-gray-300">event_busy</span>
+          <p class="text-sm mt-2">No sessions configured for this workshop.</p>
+        </div>
+      } @else {
+        <div class="divide-y divide-gray-100">
+          @for (schedule of workshop.schedules; track schedule._id ?? $index) {
+            <div class="px-6 py-4">
+              <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center font-bold text-xs border border-gray-200 shrink-0">
+                  {{ $index + 1 }}
+                </div>
+                <div class="flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="font-semibold text-gray-900">{{ schedule.activity }}</span>
+                    <span class="px-2 py-0.5 text-xs font-bold border rounded-full bg-gray-100 text-gray-700 border-gray-300">
+                      {{ getModeLabel(schedule.mode) }}
+                    </span>
+                    @if (schedule.mode === 'online' || schedule.mode === 'hybrid') {
+                      <span class="px-2 py-0.5 text-xs border rounded-full bg-gray-50 text-gray-500 border-gray-200">
+                        {{ getStreamModeLabel(schedule.streamMode ?? '') }}
+                      </span>
+                    }
+                  </div>
+                  <div class="flex flex-wrap gap-4 mt-1.5 text-xs text-gray-500">
+                    <span class="flex items-center gap-1">
+                      <span class="material-icons text-xs">event</span>
+                      {{ formatDate(schedule.date) }}
+                    </span>
+                    <span class="flex items-center gap-1">
+                      <span class="material-icons text-xs">schedule</span>
+                      {{ schedule.startTime }} – {{ schedule.endTime }} ({{ schedule.timezone }})
+                    </span>
+                    @if (schedule.location) {
+                      <span class="flex items-center gap-1">
+                        <span class="material-icons text-xs">location_on</span>
+                        {{ schedule.location }}
+                      </span>
+                    }
+                    @if (schedule.instructorId) {
+                      <span class="flex items-center gap-1">
+                        <span class="material-icons text-xs">person</span>
+                        {{ getInstructorName(schedule.instructorId) }}
+                      </span>
+                    }
+                  </div>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                  <div class="text-right">
+                    <p class="font-heading font-bold text-gray-900">${{ schedule.fee | number: '1.2-2' }}</p>
+                    <p class="text-xs text-gray-400 mt-0.5">per session</p>
+                  </div>
+                  @if (workshop.status === 'draft' || workshop.status === 'published') {
+                    <button (click)="confirmDeleteSchedule(schedule._id)"
+                      [disabled]="isDeletingSchedule"
+                      title="Remove schedule"
+                      class="text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors p-1.5 rounded-md disabled:opacity-40">
+                      <span class="material-icons text-sm">delete_outline</span>
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+        <!-- Total Revenue -->
+        <div class="bg-gray-50 border-t border-gray-100 px-6 py-3 flex items-center justify-between">
+          <span class="text-sm font-semibold text-gray-600">Total Revenue Potential</span>
+          <span class="font-heading font-bold text-gray-900">${{ getTotalRevenue() | number: '1.2-2' }}</span>
+        </div>
+      }
+    </div>
+
+  }
+</div>

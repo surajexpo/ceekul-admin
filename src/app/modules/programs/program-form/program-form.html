@@ -1,0 +1,514 @@
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div>
+    <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+      <button (click)="cancel()" class="hover:text-gray-800 transition-colors flex items-center gap-1">
+        <span class="material-icons text-sm">arrow_back</span> Programs
+      </button>
+    </div>
+    <h1 class="text-2xl font-heading font-bold text-gray-800">
+      {{ isEditMode ? 'Edit Program' : 'Create Program' }}
+    </h1>
+  </div>
+
+  @if (loadError) {
+    <div class="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3 text-red-700">
+      <span class="material-icons">error_outline</span>
+      <span class="text-sm font-medium">{{ loadError }}</span>
+    </div>
+  }
+
+  <!-- Step Indicator -->
+  <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+    <div class="flex items-center gap-0">
+      @for (step of steps; track $index; let si = $index) {
+        <div class="flex items-center flex-1 min-w-0">
+          <button (click)="goToStep(si + 1)"
+            class="flex flex-col items-center gap-1 flex-1 transition-colors"
+            [class.opacity-40]="si + 1 > currentStep && !isStepValid(currentStep)">
+            <div [class]="'w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-colors ' +
+              (currentStep === si + 1 ? 'bg-black text-white' :
+               si + 1 < currentStep ? 'bg-gray-200 text-gray-700' : 'bg-gray-100 text-gray-400')">
+              @if (si + 1 < currentStep) {
+                <span class="material-icons text-sm">check</span>
+              } @else {
+                {{ si + 1 }}
+              }
+            </div>
+            <span [class]="'text-xs font-medium hidden sm:block ' +
+              (currentStep === si + 1 ? 'text-gray-900' : 'text-gray-400')">
+              {{ step.label }}
+            </span>
+          </button>
+          @if (si < steps.length - 1) {
+            <div [class]="'h-0.5 flex-1 mx-1 rounded ' + (si + 1 < currentStep ? 'bg-gray-300' : 'bg-gray-100')"></div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- ── Step 1: Basic Info ────────────────────────────────────────────── -->
+  @if (currentStep === 1) {
+    <form [formGroup]="form" class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="bg-gray-50 border-b border-gray-100 px-6 py-4 flex items-center gap-2">
+        <span class="material-icons text-sm text-gray-400">edit_note</span>
+        <h2 class="text-sm font-heading font-bold text-gray-700">Basic Information</h2>
+      </div>
+      <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+
+        <!-- Title -->
+        <div class="md:col-span-2">
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Program Title <span class="text-red-500">*</span></label>
+          <input formControlName="title" type="text" placeholder="e.g. Full-Stack Web Development Bootcamp"
+            [class]="'w-full border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ' +
+              (isFieldInvalid('title') ? 'border-red-300 focus:ring-red-200' : 'border-gray-200 focus:ring-gray-300')" />
+          @if (isFieldInvalid('title')) {
+            <p class="text-xs text-red-500 mt-1">Title is required (min 3 characters).</p>
+          }
+        </div>
+
+        <!-- Subtitle -->
+        <div class="md:col-span-2">
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Subtitle</label>
+          <input formControlName="subtitle" type="text" placeholder="A brief tagline for your program"
+            class="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300" />
+        </div>
+
+        <!-- Description -->
+        <div class="md:col-span-2">
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Description <span class="text-red-500">*</span></label>
+          <textarea formControlName="description" rows="4" placeholder="Describe what students will learn..."
+            [class]="'w-full border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 resize-none ' +
+              (isFieldInvalid('description') ? 'border-red-300 focus:ring-red-200' : 'border-gray-200 focus:ring-gray-300')">
+          </textarea>
+          @if (isFieldInvalid('description')) {
+            <p class="text-xs text-red-500 mt-1">Description is required.</p>
+          }
+        </div>
+
+        <!-- Category -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Category</label>
+          <select formControlName="category"
+            class="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-300">
+            <option value="">Select category</option>
+            @for (cat of categories; track cat) {
+              <option [value]="cat">{{ cat }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Level -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Level <span class="text-red-500">*</span></label>
+          <select formControlName="level"
+            class="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-300">
+            @for (lvl of levels; track lvl.value) {
+              <option [value]="lvl.value">{{ lvl.label }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Duration -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Total Duration (hours)</label>
+          <input formControlName="duration" type="number" min="0" placeholder="e.g. 40"
+            class="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300" />
+        </div>
+
+        <!-- Language -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Language</label>
+          <input formControlName="language" type="text" placeholder="English"
+            class="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300" />
+        </div>
+
+        <!-- Thumbnail URL -->
+        <div class="md:col-span-2">
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Thumbnail URL</label>
+          <input formControlName="thumbnail" type="url" placeholder="https://..."
+            class="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300" />
+        </div>
+
+        <!-- Tags -->
+        <div class="md:col-span-2">
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">Tags (comma-separated)</label>
+          <input [(ngModel)]="tagInput" [ngModelOptions]="{standalone: true}" type="text"
+            placeholder="e.g. javascript, react, node"
+            class="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300" />
+        </div>
+
+      </div>
+    </form>
+  }
+
+  <!-- ── Step 2: Curriculum Builder ───────────────────────────────────── -->
+  @if (currentStep === 2) {
+    <div class="space-y-4">
+
+      <!-- Curriculum stats bar -->
+      @if (curriculum.length > 0) {
+        <div class="bg-gray-900 text-white rounded-xl px-5 py-3 flex items-center gap-6 text-sm">
+          <span class="flex items-center gap-1.5">
+            <span class="material-icons text-sm text-gray-400">view_module</span>
+            <strong>{{ curriculum.length }}</strong> module{{ curriculum.length !== 1 ? 's' : '' }}
+          </span>
+          <span class="flex items-center gap-1.5">
+            <span class="material-icons text-sm text-gray-400">folder</span>
+            <strong>{{ totalSections }}</strong> section{{ totalSections !== 1 ? 's' : '' }}
+          </span>
+          <span class="flex items-center gap-1.5">
+            <span class="material-icons text-sm text-gray-400">topic</span>
+            <strong>{{ totalTopics }}</strong> topic{{ totalTopics !== 1 ? 's' : '' }}
+          </span>
+        </div>
+      }
+
+      <!-- Modules Drop List -->
+      <div cdkDropList [cdkDropListData]="curriculum" (cdkDropListDropped)="dropModule($event)" class="space-y-3">
+
+        @for (mod of curriculum; track mod.tempId; let mi = $index) {
+          <div cdkDrag class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+
+            <!-- Module Header -->
+            <div class="flex items-center gap-2 px-4 py-3 bg-gray-50 border-b border-gray-100">
+              <span cdkDragHandle class="material-icons text-gray-300 cursor-grab active:cursor-grabbing select-none">drag_indicator</span>
+              <span class="w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center shrink-0">{{ mi + 1 }}</span>
+              <input [(ngModel)]="mod.title" type="text"
+                class="flex-1 bg-transparent font-semibold text-gray-800 text-sm focus:outline-none focus:bg-white focus:border focus:border-gray-300 focus:rounded px-2 py-1 -mx-2"
+                placeholder="Module title" />
+              <button (click)="addSection(mi)"
+                class="text-xs text-gray-500 hover:text-gray-800 flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-200 transition-colors">
+                <span class="material-icons text-xs">add</span> Section
+              </button>
+              <button (click)="toggleModule(mi)"
+                class="text-gray-400 hover:text-gray-700 p-1 rounded hover:bg-gray-200 transition-colors">
+                <span class="material-icons text-sm">{{ mod.expanded ? 'expand_less' : 'expand_more' }}</span>
+              </button>
+              <button (click)="removeModule(mi)"
+                class="text-gray-400 hover:text-red-500 hover:bg-red-50 p-1 rounded transition-colors">
+                <span class="material-icons text-sm">delete_outline</span>
+              </button>
+            </div>
+
+            <!-- Module Description -->
+            @if (mod.expanded) {
+              <div class="px-4 pt-3 pb-1">
+                <input [(ngModel)]="mod.description" type="text"
+                  class="w-full text-xs text-gray-500 border border-transparent focus:border-gray-200 focus:outline-none rounded px-2 py-1 placeholder-gray-400"
+                  placeholder="Module description (optional)" />
+              </div>
+
+              <!-- Sections Drop List -->
+              @if (mod.sections.length === 0) {
+                <div class="px-4 pb-4 pt-2">
+                  <button (click)="addSection(mi)"
+                    class="w-full border-2 border-dashed border-gray-200 rounded-lg py-3 text-xs text-gray-400 hover:border-gray-300 hover:text-gray-500 transition-colors flex items-center justify-center gap-1.5">
+                    <span class="material-icons text-sm">add</span> Add first section
+                  </button>
+                </div>
+              } @else {
+                <div cdkDropList [cdkDropListData]="mod.sections" (cdkDropListDropped)="dropSection($event, mi)"
+                  class="px-4 pb-4 pt-2 space-y-2">
+
+                  @for (sec of mod.sections; track sec.tempId; let si = $index) {
+                    <div cdkDrag class="border border-gray-200 rounded-lg overflow-hidden">
+
+                      <!-- Section Header -->
+                      <div class="flex items-center gap-2 px-3 py-2 bg-white">
+                        <span cdkDragHandle class="material-icons text-xs text-gray-300 cursor-grab select-none">drag_indicator</span>
+                        <span class="text-xs font-bold text-gray-400 w-4">{{ si + 1 }}</span>
+                        <input [(ngModel)]="sec.title" type="text"
+                          class="flex-1 bg-transparent text-sm text-gray-700 focus:outline-none focus:bg-gray-50 focus:border-b focus:border-gray-300 px-1"
+                          placeholder="Section title" />
+                        <button (click)="addTopic(mi, si)"
+                          class="text-xs text-gray-400 hover:text-gray-700 flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-gray-100 transition-colors">
+                          <span class="material-icons text-xs">add</span> Topic
+                        </button>
+                        <button (click)="toggleSection(mi, si)"
+                          class="text-gray-400 hover:text-gray-700 p-0.5 rounded hover:bg-gray-100 transition-colors">
+                          <span class="material-icons text-xs">{{ sec.expanded ? 'expand_less' : 'expand_more' }}</span>
+                        </button>
+                        <button (click)="removeSection(mi, si)"
+                          class="text-gray-400 hover:text-red-500 hover:bg-red-50 p-0.5 rounded transition-colors">
+                          <span class="material-icons text-xs">delete_outline</span>
+                        </button>
+                      </div>
+
+                      <!-- Topics Drop List -->
+                      @if (sec.expanded) {
+                        @if (sec.topics.length === 0) {
+                          <div class="px-3 pb-3 pt-1">
+                            <button (click)="addTopic(mi, si)"
+                              class="w-full border border-dashed border-gray-200 rounded py-2 text-xs text-gray-400 hover:border-gray-300 hover:text-gray-500 transition-colors flex items-center justify-center gap-1">
+                              <span class="material-icons text-xs">add</span> Add topic
+                            </button>
+                          </div>
+                        } @else {
+                          <div cdkDropList [cdkDropListData]="sec.topics"
+                            (cdkDropListDropped)="dropTopic($event, mi, si)"
+                            class="px-3 pb-3 pt-1 space-y-1.5">
+
+                            @for (topic of sec.topics; track topic.tempId; let ti = $index) {
+                              <div cdkDrag class="border border-gray-100 rounded-lg bg-gray-50 overflow-hidden">
+
+                                <!-- Topic Row -->
+                                <div class="flex items-center gap-2 px-3 py-2">
+                                  <span cdkDragHandle class="material-icons text-xs text-gray-300 cursor-grab select-none">drag_indicator</span>
+                                  <span [class]="'material-icons text-xs text-gray-400'">{{ getTopicTypeIcon(topic.type) }}</span>
+                                  <input [(ngModel)]="topic.title" type="text"
+                                    class="flex-1 bg-transparent text-xs text-gray-700 focus:outline-none px-1"
+                                    placeholder="Topic title" />
+                                  <select [(ngModel)]="topic.type"
+                                    class="text-xs border border-gray-200 rounded px-1.5 py-0.5 bg-white text-gray-600 focus:outline-none">
+                                    @for (tt of topicTypes; track tt.value) {
+                                      <option [value]="tt.value">{{ tt.label }}</option>
+                                    }
+                                  </select>
+                                  <button (click)="toggleTopic(mi, si, ti)"
+                                    class="text-gray-400 hover:text-gray-700 p-0.5 rounded transition-colors">
+                                    <span class="material-icons text-xs">{{ topic.expanded ? 'expand_less' : 'expand_more' }}</span>
+                                  </button>
+                                  <button (click)="removeTopic(mi, si, ti)"
+                                    class="text-gray-400 hover:text-red-500 hover:bg-red-50 p-0.5 rounded transition-colors">
+                                    <span class="material-icons text-xs">close</span>
+                                  </button>
+                                </div>
+
+                                <!-- Topic detail form -->
+                                @if (topic.expanded) {
+                                  <div class="px-3 pb-3 grid grid-cols-1 sm:grid-cols-2 gap-2 border-t border-gray-100 pt-2">
+                                    <div class="sm:col-span-2">
+                                      <label class="text-xs text-gray-500">Content URL</label>
+                                      <input [(ngModel)]="topic.contentUrl" type="url" placeholder="https://..."
+                                        class="w-full mt-0.5 border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-gray-300" />
+                                    </div>
+                                    <div class="sm:col-span-2">
+                                      <label class="text-xs text-gray-500">Description</label>
+                                      <input [(ngModel)]="topic.description" type="text" placeholder="Brief description"
+                                        class="w-full mt-0.5 border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-gray-300" />
+                                    </div>
+                                    <div>
+                                      <label class="text-xs text-gray-500">Duration (min)</label>
+                                      <input [(ngModel)]="topic.duration" type="number" min="0" placeholder="0"
+                                        class="w-full mt-0.5 border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-gray-300" />
+                                    </div>
+                                  </div>
+                                }
+
+                              </div>
+                            }
+
+                          </div>
+                        }
+                      }
+
+                    </div>
+                  }
+
+                </div>
+              }
+            }
+
+          </div>
+        }
+
+      </div>
+
+      <!-- Add Module Button -->
+      <button (click)="addModule()"
+        class="w-full border-2 border-dashed border-gray-300 rounded-xl py-4 text-sm text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors flex items-center justify-center gap-2 font-medium">
+        <span class="material-icons text-base">add_circle_outline</span> Add Module
+      </button>
+
+    </div>
+  }
+
+  <!-- ── Step 3: Instructors ───────────────────────────────────────────── -->
+  @if (currentStep === 3) {
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="bg-gray-50 border-b border-gray-100 px-6 py-4 flex items-center gap-2">
+        <span class="material-icons text-sm text-gray-400">people</span>
+        <h2 class="text-sm font-heading font-bold text-gray-700">Assign Instructors</h2>
+      </div>
+      <div class="p-6 space-y-5">
+        <p class="text-sm text-gray-500">Enter the Instructor IDs to assign them to this program.</p>
+
+        <!-- Add Instructor Input -->
+        <div class="flex gap-3">
+          <input [(ngModel)]="instructorIdInput" type="text" placeholder="Paste instructor ID (ObjectId)"
+            (keydown.enter)="addInstructor()"
+            class="flex-1 border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300" />
+          <button (click)="addInstructor()"
+            class="px-4 py-2.5 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors flex items-center gap-2">
+            <span class="material-icons text-sm">add</span> Add
+          </button>
+        </div>
+
+        <!-- Instructors List -->
+        @if (instructors.length === 0) {
+          <div class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center text-gray-400">
+            <span class="material-icons text-3xl text-gray-300">person_off</span>
+            <p class="text-sm mt-2">No instructors assigned yet.</p>
+          </div>
+        } @else {
+          <div class="space-y-2">
+            @for (id of instructors; track id) {
+              <div class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                    <span class="material-icons text-sm text-gray-500">person</span>
+                  </div>
+                  <span class="text-sm font-mono text-gray-700">{{ id }}</span>
+                </div>
+                <button (click)="removeInstructor(id)"
+                  class="text-gray-400 hover:text-red-500 p-1 rounded hover:bg-red-50 transition-colors">
+                  <span class="material-icons text-sm">close</span>
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ── Step 4: Review & Publish ──────────────────────────────────────── -->
+  @if (currentStep === 4) {
+    <div class="space-y-5">
+
+      <!-- Success Banner -->
+      @if (submitSuccess) {
+        <div class="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3 text-green-700">
+          <span class="material-icons text-green-500">check_circle</span>
+          <span class="font-semibold">Program saved! Redirecting...</span>
+        </div>
+      }
+
+      <!-- Error Banner -->
+      @if (submitError) {
+        <div class="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3 text-red-700">
+          <span class="material-icons text-red-400">error_outline</span>
+          <span class="text-sm font-medium">{{ submitError }}</span>
+        </div>
+      }
+
+      <!-- Summary Card -->
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="bg-gray-50 border-b border-gray-100 px-6 py-4 flex items-center gap-2">
+          <span class="material-icons text-sm text-gray-400">preview</span>
+          <h2 class="text-sm font-heading font-bold text-gray-700">Program Summary</h2>
+        </div>
+        <div class="p-6 space-y-4">
+          <div>
+            <p class="text-xs text-gray-400 uppercase tracking-wide font-semibold">Title</p>
+            <p class="text-lg font-heading font-bold text-gray-900 mt-1">{{ form.get('title')?.value || '—' }}</p>
+          </div>
+          @if (form.get('subtitle')?.value) {
+            <div>
+              <p class="text-xs text-gray-400 uppercase tracking-wide font-semibold">Subtitle</p>
+              <p class="text-sm text-gray-700 mt-1">{{ form.get('subtitle')?.value }}</p>
+            </div>
+          }
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="bg-gray-50 rounded-lg p-3 text-center">
+              <p class="text-2xl font-heading font-bold text-gray-900">{{ curriculum.length }}</p>
+              <p class="text-xs text-gray-500 mt-0.5">Modules</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-3 text-center">
+              <p class="text-2xl font-heading font-bold text-gray-900">{{ totalSections }}</p>
+              <p class="text-xs text-gray-500 mt-0.5">Sections</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-3 text-center">
+              <p class="text-2xl font-heading font-bold text-gray-900">{{ totalTopics }}</p>
+              <p class="text-xs text-gray-500 mt-0.5">Topics</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-3 text-center">
+              <p class="text-2xl font-heading font-bold text-gray-900">{{ instructors.length }}</p>
+              <p class="text-xs text-gray-500 mt-0.5">Instructors</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Publish Settings -->
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="bg-gray-50 border-b border-gray-100 px-6 py-4 flex items-center gap-2">
+          <span class="material-icons text-sm text-gray-400">settings</span>
+          <h2 class="text-sm font-heading font-bold text-gray-700">Publish Settings</h2>
+        </div>
+        <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+
+          <!-- Visibility -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-2">Visibility</label>
+            <div class="flex gap-3">
+              @for (opt of [{value: 'public', label: 'Public', icon: 'public'}, {value: 'private', label: 'Private', icon: 'lock'}]; track opt.value) {
+                <button (click)="setVisibility(opt.value)"
+                  [class]="'flex-1 flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-colors ' +
+                    (programVisibility === opt.value ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 text-gray-600 hover:border-gray-300')">
+                  <span class="material-icons text-base">{{ opt.icon }}</span>
+                  <span class="text-xs font-semibold">{{ opt.label }}</span>
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-2">Status</label>
+            <div class="flex gap-3">
+              @for (opt of [{value: 'draft', label: 'Save as Draft', icon: 'save'}, {value: 'published', label: 'Publish Now', icon: 'public'}]; track opt.value) {
+                <button (click)="setStatus(opt.value)"
+                  [class]="'flex-1 flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-colors ' +
+                    (programStatus === opt.value ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-200 text-gray-600 hover:border-gray-300')">
+                  <span class="material-icons text-base">{{ opt.icon }}</span>
+                  <span class="text-xs font-semibold">{{ opt.label }}</span>
+                </button>
+              }
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Submit Buttons -->
+      <div class="flex gap-3 justify-end">
+        <button (click)="saveAsDraft()" [disabled]="isSubmitting"
+          class="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 flex items-center gap-2">
+          @if (isSubmitting && programStatus === 'draft') {
+            <span class="material-icons text-sm animate-spin">refresh</span>
+          }
+          Save as Draft
+        </button>
+        <button (click)="publish()" [disabled]="isSubmitting"
+          class="px-5 py-2.5 bg-black text-white rounded-lg text-sm font-bold hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center gap-2">
+          @if (isSubmitting && programStatus === 'published') {
+            <span class="material-icons text-sm animate-spin">refresh</span>
+          }
+          Publish Program
+        </button>
+      </div>
+
+    </div>
+  }
+
+  <!-- Navigation Bar -->
+  @if (currentStep < 4) {
+    <div class="flex items-center justify-between">
+      <button (click)="prevStep()" [disabled]="currentStep === 1"
+        class="px-4 py-2.5 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-40 flex items-center gap-2">
+        <span class="material-icons text-sm">arrow_back</span> Back
+      </button>
+      <button (click)="cancel()"
+        class="text-sm text-gray-400 hover:text-gray-600 transition-colors">Cancel</button>
+      <button (click)="nextStep()"
+        class="px-5 py-2.5 bg-black text-white rounded-lg text-sm font-bold hover:bg-gray-800 transition-colors flex items-center gap-2">
+        Next <span class="material-icons text-sm">arrow_forward</span>
+      </button>
+    </div>
+  }
+
+</div>
