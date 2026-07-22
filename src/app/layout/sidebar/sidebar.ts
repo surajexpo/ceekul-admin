@@ -13,6 +13,7 @@ export class Sidebar {
   menuItems = [
     { label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },
     { label: 'Users', icon: 'people', route: '/users' },
+    { label: 'Temp Workshops', icon: 'event', route: '/temp-workshops' },
     { label: 'Teachers', icon: 'school', route: '/teachers' },
     { label: 'Programs', icon: 'school', route: '/programs' },
     { label: 'Workshops', icon: 'event', route: '/workshops' },

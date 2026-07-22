@@ -34,5 +34,7 @@ export interface AdminLoginResponse {
   status: boolean;
   message: string;
   token: string;
+  refreshToken: string;
+  expiresIn: number;
   admin: AdminProfile;
 }

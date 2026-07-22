@@ -12,6 +12,7 @@ import {
 import { environment } from '../../../environments/environment';
 
 const TOKEN_KEY = 'authToken';
+const REFRESH_TOKEN_KEY = 'authRefreshToken';
 const ADMIN_KEY = 'authAdmin';
 
 @Injectable({ providedIn: 'root' })
@@ -31,6 +32,7 @@ export class AuthService {
       tap(res => {
         if (this.isBrowser) {
           localStorage.setItem(TOKEN_KEY, res.token);
+          localStorage.setItem(REFRESH_TOKEN_KEY, res.refreshToken);
           localStorage.setItem(ADMIN_KEY, JSON.stringify(res.admin));
         }
       })
@@ -41,6 +43,7 @@ export class AuthService {
   logout(): void {
     if (this.isBrowser) {
       localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
       localStorage.removeItem(ADMIN_KEY);
     }
   }

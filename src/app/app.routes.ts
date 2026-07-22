@@ -40,7 +40,13 @@ export const routes: Routes = [
           { path: ':id', loadComponent: () => import('./modules/programs/program-detail/program-detail').then(m => m.ProgramDetail) }
         ]
       },
-      { path: 'content', loadComponent: () => import('./modules/content/content').then(m => m.Content) }
+      { path: 'content', loadComponent: () => import('./modules/content/content').then(m => m.Content) },
+      {
+        path: 'temp-workshops',
+        loadComponent: () =>
+          import('./modules/temp-workshops/temp-workshops').then(({ TempWorkshops }) => TempWorkshops)
+      }
+
     ]
   },
   { path: '**', redirectTo: '' }

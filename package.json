@@ -6,8 +6,7 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test",
-    "serve:ssr:ceekul-admin": "node dist/ceekul-admin/server/server.mjs"
+    "test": "ng test"
   },
   "prettier": {
     "printWidth": 100,

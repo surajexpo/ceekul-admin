@@ -1,0 +1,96 @@
+<div class="workspace">
+  <header class="page-header">
+    <div><p class="eyebrow">Learning catalogue</p><h1>Workshop Content Management</h1><p class="subtitle">Create workshops, organize categories, and build every lesson in one place.</p></div>
+    <button class="btn primary" (click)="activeTab === 'categories' ? openCategory() : activeTab === 'content' ? openSection() : openWorkshop()" [disabled]="activeTab === 'content' && !selectedWorkshop">
+      <span class="material-icons">add</span>{{ activeTab === 'categories' ? 'New category' : activeTab === 'content' ? 'New section' : 'New workshop' }}
+    </button>
+  </header>
+
+  @if (feedback) { <div class="toast"><span class="material-icons">check_circle</span>{{ feedback }}</div> }
+  <nav class="tabs" aria-label="Workshop management views">
+    <button [class.active]="activeTab === 'workshops'" (click)="setTab('workshops')"><span class="material-icons">event</span>Workshops <b>{{ workshops.length }}</b></button>
+    <button [class.active]="activeTab === 'categories'" (click)="setTab('categories')"><span class="material-icons">category</span>Categories <b>{{ categories.length }}</b></button>
+    <button [class.active]="activeTab === 'content'" (click)="setTab('content')"><span class="material-icons">account_tree</span>Workshop Content</button>
+  </nav>
+
+  @if (isLoading) {
+    <div class="state-card"><span class="spinner"></span><h2>Loading workspace</h2><p>Preparing your workshop catalogue…</p></div>
+  } @else if (loadError) {
+    <div class="state-card error"><span class="material-icons">cloud_off</span><h2>Something went wrong</h2><p>{{ loadError }}</p><button class="btn secondary" (click)="loadData()">Try again</button></div>
+  } @else {
+    @if (activeTab === 'workshops') {
+      <section class="summary-grid">
+        <article><span class="material-icons purple">event_note</span><div><strong>{{ workshops.length }}</strong><small>Total workshops</small></div></article>
+        <article><span class="material-icons green">public</span><div><strong>{{ statusCount('published') }}</strong><small>Published</small></div></article>
+        <article><span class="material-icons amber">edit_note</span><div><strong>{{ statusCount('draft') }}</strong><small>Drafts</small></div></article>
+      </section>
+      @if (!workshops.length) {
+        <div class="state-card"><span class="material-icons">event_busy</span><h2>No workshops yet</h2><p>Create your first workshop and start building its curriculum.</p><button class="btn primary" (click)="openWorkshop()">Create workshop</button></div>
+      } @else {
+        <section class="card-grid">
+          @for (workshop of workshops; track workshop.id) {
+            <article class="workshop-card">
+              <div class="cover" [style.background-image]="workshop.thumbnailUrl ? 'url(' + workshop.thumbnailUrl + ')' : ''">
+                @if (!workshop.thumbnailUrl) { <span class="material-icons">auto_stories</span> }
+                <span class="status" [class.published]="workshop.status === 'published'">{{ workshop.status }}</span>
+              </div>
+              <div class="card-body"><div class="meta"><span>{{ categoryName(workshop.categoryId) }}</span><span>{{ workshop.deliveryMode }}</span></div>
+                <h2>{{ workshop.title }}</h2><p>{{ workshop.shortDescription }}</p>
+                <div class="facts"><span><span class="material-icons">person</span>{{ workshop.instructor }}</span><span><span class="material-icons">payments</span>{{ workshop.price | currency:'INR':'symbol':'1.0-0' }}</span></div>
+              </div>
+              <footer><button class="icon-btn" title="Edit workshop" (click)="openWorkshop(workshop)"><span class="material-icons">edit</span></button>
+                <button class="btn ghost" (click)="selectWorkshop(workshop.id); setTab('content')">Manage content</button>
+                <button class="icon-btn danger" title="Delete workshop" (click)="requestDelete({kind:'workshop', workshopId:workshop.id, label:workshop.title})"><span class="material-icons">delete</span></button></footer>
+            </article>
+          }
+        </section>
+      }
+    }
+
+    @if (activeTab === 'categories') {
+      @if (!categories.length) { <div class="state-card"><span class="material-icons">category</span><h2>No categories yet</h2><p>Add categories to keep the catalogue organized.</p><button class="btn primary" (click)="openCategory()">Add category</button></div> }
+      @else { <section class="category-grid">
+        @for (category of categories; track category.id) {
+          <article class="category-card"><div class="category-icon"><span class="material-icons">{{ category.icon }}</span></div><div class="category-copy"><div class="title-row"><h2>{{ category.name }}</h2><span class="dot-label" [class.inactive]="!category.active">{{ category.active ? 'Active' : 'Inactive' }}</span></div><p>{{ category.description }}</p><small>{{ categoryWorkshopCount(category.id) }} workshops</small></div>
+            <div class="card-actions"><button class="icon-btn" (click)="openCategory(category)" title="Edit"><span class="material-icons">edit</span></button><button class="icon-btn danger" [disabled]="!canDeleteCategory(category)" [title]="canDeleteCategory(category) ? 'Delete' : 'Category is in use'" (click)="requestDelete({kind:'category', categoryId:category.id, label:category.name})"><span class="material-icons">delete</span></button></div></article>
+        }
+      </section> }
+    }
+
+    @if (activeTab === 'content') {
+      <div class="content-toolbar"><label>Editing curriculum for<select [value]="selectedWorkshopId" (change)="selectWorkshop($any($event.target).value)"><option value="">Select a workshop</option>@for (workshop of workshops; track workshop.id) { <option [value]="workshop.id">{{ workshop.title }}</option> }</select></label>
+        @if (selectedWorkshop) { <div class="curriculum-stats"><span><b>{{ selectedWorkshop.sections.length }}</b> sections</span><span><b>{{ totalLessons }}</b> lessons</span><span><b>{{ totalDuration }}</b> minutes</span></div> }
+      </div>
+      @if (!selectedWorkshop) { <div class="state-card"><span class="material-icons">library_books</span><h2>Select a workshop</h2><p>Choose a workshop above to create and preview its curriculum.</p></div> }
+      @else {
+        <div class="content-layout"><main class="curriculum-panel"><div class="panel-heading"><div><p class="eyebrow">Curriculum builder</p><h2>{{ selectedWorkshop.title }}</h2></div><button class="btn secondary" (click)="openSection()"><span class="material-icons">add</span>Add section</button></div>
+          @if (!selectedWorkshop.sections.length) { <div class="inline-empty"><span class="material-icons">format_list_numbered</span><h3>Your curriculum is empty</h3><p>Add a section, then fill it with lessons.</p></div> }
+          <div cdkDropList [cdkDropListData]="selectedWorkshop.sections" (cdkDropListDropped)="dropSection($event)" class="section-list">
+            @for (section of selectedWorkshop.sections; track section.id; let sectionIndex = $index) {
+              <article class="section-card" cdkDrag><header><span class="drag material-icons" cdkDragHandle>drag_indicator</span><button class="section-toggle" (click)="toggleSection(section.id)"><span class="number">{{ sectionIndex + 1 }}</span><span><b>{{ section.title }}</b><small>{{ section.lessons.length }} lessons · {{ section.description }}</small></span></button><div class="section-actions"><button class="icon-btn" (click)="openLesson(section.id)" title="Add lesson"><span class="material-icons">playlist_add</span></button><button class="icon-btn" (click)="openSection(section)" title="Edit section"><span class="material-icons">edit</span></button><button class="icon-btn danger" (click)="requestDelete({kind:'section', workshopId:selectedWorkshop.id, sectionId:section.id, label:section.title})" title="Delete section"><span class="material-icons">delete</span></button><button class="icon-btn" (click)="toggleSection(section.id)"><span class="material-icons">{{ expandedSections.has(section.id) ? 'expand_less' : 'expand_more' }}</span></button></div></header>
+                @if (expandedSections.has(section.id)) { <div class="lessons" cdkDropList [cdkDropListData]="section.lessons" (cdkDropListDropped)="dropLesson($event, section)">
+                  @for (lesson of section.lessons; track lesson.id; let lessonIndex = $index) { <div class="lesson" cdkDrag><span class="drag material-icons" cdkDragHandle>drag_indicator</span><div class="lesson-type"><span class="material-icons">{{ contentTypeIcon(lesson.contentType) }}</span></div><div class="lesson-copy"><b>{{ lessonIndex + 1 }}. {{ lesson.title }}</b><small>{{ contentTypeLabel(lesson.contentType) }} · {{ lesson.durationMinutes }} min · {{ lesson.access === 'free' ? 'Free preview' : 'Enrolled only' }}</small></div><button class="icon-btn" (click)="openLesson(section.id, lesson)"><span class="material-icons">edit</span></button><button class="icon-btn danger" (click)="requestDelete({kind:'lesson', workshopId:selectedWorkshop.id, sectionId:section.id, lessonId:lesson.id, label:lesson.title})"><span class="material-icons">delete</span></button></div> }
+                  @if (!section.lessons.length) { <button class="add-lesson-empty" (click)="openLesson(section.id)"><span class="material-icons">add_circle</span>Add the first lesson</button> }
+                </div> }
+              </article>
+            }
+          </div>
+        </main><aside class="preview-panel"><p class="eyebrow">Structured preview</p><h2>Student view</h2><div class="preview-cover"><span class="material-icons">school</span></div><h3>{{ selectedWorkshop.title }}</h3><p>{{ selectedWorkshop.shortDescription }}</p><div class="preview-meta"><span>{{ categoryName(selectedWorkshop.categoryId) }}</span><span>{{ selectedWorkshop.deliveryMode }}</span></div><hr>
+          @for (section of selectedWorkshop.sections; track section.id; let i = $index) { <div class="preview-section"><b>{{ i + 1 }}. {{ section.title }}</b>@for (lesson of section.lessons; track lesson.id) { <span><span class="material-icons">{{ contentTypeIcon(lesson.contentType) }}</span>{{ lesson.title }}<small>{{ lesson.durationMinutes }}m</small></span> }</div> }
+        </aside></div>
+      }
+    }
+  }
+</div>
+
+@if (showWorkshopForm || showCategoryForm || showSectionForm || showLessonForm) {
+  <div class="modal-backdrop" (click)="closeForms()"><section class="modal" (click)="$event.stopPropagation()"><header><div><p class="eyebrow">{{ editingWorkshopId || editingCategoryId || editingSectionId || editingLessonId ? 'Update details' : 'Create new' }}</p><h2>{{ showWorkshopForm ? 'Workshop' : showCategoryForm ? 'Category' : showSectionForm ? 'Curriculum section' : 'Lesson' }}</h2></div><button class="icon-btn" (click)="closeForms()"><span class="material-icons">close</span></button></header>
+    @if (saveError) { <div class="form-error" role="alert"><span class="material-icons">error</span><span>{{ saveError }}</span></div> }
+    @if (showWorkshopForm) { <form [formGroup]="workshopForm" (ngSubmit)="saveWorkshop()" class="form-grid"><label class="wide">Workshop title<input formControlName="title" placeholder="e.g. Design Thinking Sprint">@if (controlInvalid(workshopForm.controls.title)) { <small class="field-error">Enter 3–100 characters.</small> }</label><label class="wide">Short description<textarea rows="2" formControlName="shortDescription" placeholder="A concise catalogue summary"></textarea>@if (controlInvalid(workshopForm.controls.shortDescription)) { <small class="field-error">Enter 10–180 characters.</small> }</label><label class="wide">Full description<textarea rows="4" formControlName="description" placeholder="What will participants learn?"></textarea>@if (controlInvalid(workshopForm.controls.description)) { <small class="field-error">Enter at least 20 characters.</small> }</label><label>Category<select formControlName="categoryId"><option value="">Select category</option>@for (category of activeCategories; track category.id) { <option [value]="category.id">{{ category.name }}</option> }</select><small class="field-error" *ngIf="controlInvalid(workshopForm.controls.categoryId)">Category is required.</small></label><label>Instructor / expert<input formControlName="instructor" placeholder="Full name"><small class="field-error" *ngIf="controlInvalid(workshopForm.controls.instructor)">Instructor is required.</small></label><label>Delivery mode<select formControlName="deliveryMode"><option value="online">Online</option><option value="hybrid">Hybrid</option></select></label><label>Price (₹)<input type="number" min="0" formControlName="price"><small class="field-error" *ngIf="controlInvalid(workshopForm.controls.price)">Use a valid price.</small></label><label>Status<select formControlName="status"><option value="draft">Draft</option><option value="published">Published</option></select></label><label class="wide">Cover image URL<input formControlName="thumbnailUrl" placeholder="https://…"><small class="hint">Use a public image URL. Upload integration can replace this field later.</small><small class="field-error" *ngIf="controlInvalid(workshopForm.controls.thumbnailUrl)">Enter a valid http(s) URL.</small></label><div class="form-actions wide"><button type="button" class="btn secondary" (click)="closeForms()">Cancel</button><button class="btn primary" [disabled]="isSaving">{{ isSaving ? 'Saving…' : 'Save workshop' }}</button></div></form> }
+    @if (showCategoryForm) { <form [formGroup]="categoryForm" (ngSubmit)="saveCategory()" class="form-grid"><label class="wide">Category name<input formControlName="name" placeholder="e.g. Personal Development"><small class="field-error" *ngIf="controlInvalid(categoryForm.controls.name)">Enter 2–60 characters.</small></label><label class="wide">Description<textarea rows="3" formControlName="description"></textarea><small class="field-error" *ngIf="controlInvalid(categoryForm.controls.description)">Enter 8–240 characters.</small></label><label>Material icon name<input formControlName="icon" placeholder="category"><small class="hint">Example: palette, code, science</small></label><label>Image URL (optional)<input formControlName="imageUrl" placeholder="https://…"><small class="field-error" *ngIf="controlInvalid(categoryForm.controls.imageUrl)">Enter a valid URL.</small></label><label class="check wide"><input type="checkbox" formControlName="active">Category is active and available to new workshops</label><div class="form-actions wide"><button type="button" class="btn secondary" (click)="closeForms()">Cancel</button><button class="btn primary" [disabled]="isSaving">Save category</button></div></form> }
+    @if (showSectionForm) { <form [formGroup]="sectionForm" (ngSubmit)="saveSection()" class="form-grid"><label class="wide">Section title<input formControlName="title" placeholder="e.g. Getting Started"><small class="field-error" *ngIf="controlInvalid(sectionForm.controls.title)">Enter 3–100 characters.</small></label><label class="wide">Description<textarea rows="3" formControlName="description"></textarea><small class="field-error" *ngIf="controlInvalid(sectionForm.controls.description)">Enter 8–300 characters.</small></label><div class="form-actions wide"><button type="button" class="btn secondary" (click)="closeForms()">Cancel</button><button class="btn primary">Save section</button></div></form> }
+    @if (showLessonForm) { <form [formGroup]="lessonForm" (ngSubmit)="saveLesson()" class="form-grid"><label class="wide">Lesson title<input formControlName="title" placeholder="e.g. Welcome and outcomes"><small class="field-error" *ngIf="controlInvalid(lessonForm.controls.title)">Enter 3–100 characters.</small></label><label class="wide">Description<textarea rows="3" formControlName="description"></textarea><small class="field-error" *ngIf="controlInvalid(lessonForm.controls.description)">Enter 8–500 characters.</small></label><label>Content type<select formControlName="contentType">@for (type of contentTypes; track type.value) { <option [value]="type.value">{{ type.label }}</option> }</select></label><label>Duration (minutes)<input type="number" min="1" formControlName="durationMinutes"><small class="field-error" *ngIf="controlInvalid(lessonForm.controls.durationMinutes)">Use 1–1440 minutes.</small></label><label>Access<select formControlName="access"><option value="free">Free preview</option><option value="enrolled">Enrolled only</option></select></label><label class="wide">{{ selectedContentType === 'external_link' ? 'External URL' : selectedContentType === 'live_session' ? 'Meeting URL' : 'File or content URL' }}<input formControlName="resourceUrl" placeholder="https://…"><small class="hint">{{ selectedContentType === 'video' || selectedContentType === 'pdf' ? 'Paste a hosted file URL. A backend upload endpoint can be connected here later.' : 'Optional resource destination.' }}</small><small class="field-error" *ngIf="controlInvalid(lessonForm.controls.resourceUrl)">Enter a valid URL.</small></label><div class="upload-placeholder wide"><span class="material-icons">cloud_upload</span><b>Upload placeholder</b><span>Video and document uploads will be enabled when storage APIs are connected.</span></div><div class="form-actions wide"><button type="button" class="btn secondary" (click)="closeForms()">Cancel</button><button class="btn primary">Save lesson</button></div></form> }
+  </section></div>
+}
+
+@if (confirmation) { <div class="modal-backdrop"><section class="confirm"><div class="warning-icon"><span class="material-icons">delete_forever</span></div><h2>Delete {{ confirmation.kind }}?</h2><p><b>{{ confirmation.label }}</b> will be removed. This action cannot be undone.</p><div class="form-actions"><button class="btn secondary" (click)="cancelDelete()">Keep it</button><button class="btn delete" (click)="confirmDelete()">Delete</button></div></section></div> }
